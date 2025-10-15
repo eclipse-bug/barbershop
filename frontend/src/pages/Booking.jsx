@@ -1,21 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Clock } from "lucide-react";
+import { CalendarDays, Clock, Scissors } from "lucide-react";
 
 export default function Booking() {
   const [form, setForm] = useState({
-    nume: "",
-    prenume: "",
-    telefon: "",
     service: "",
+    barber_id: "",
     date: "",
     time: "",
   });
-
-  const [bookedTimes, setBookedTimes] = useState([]); // ✅ ore ocupate
+  const [user, setUser] = useState(null);
+  const [barbers, setBarbers] = useState([]);
+  const [bookedTimes, setBookedTimes] = useState([]);
+  const [holidays, setHolidays] = useState([]); // 🔹 zile libere
+  const [message, setMessage] = useState("");
   const dateRef = useRef(null);
 
-  // ore între 08:00 - 20:00 din 40 în 40 min
+  // 🔹 Ore disponibile
   const generateTimes = () => {
     const times = [];
     let start = 8 * 60;
@@ -28,49 +29,121 @@ export default function Booking() {
     }
     return times;
   };
+  const allTimes = generateTimes();
 
-  const timeSlots = generateTimes();
-
+  // 🔹 Citim userul logat
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("loggedUser"));
-    if (user) {
-      setForm((prev) => ({
-        ...prev,
-        nume: user.nume || "",
-        prenume: user.prenume || "",
-        telefon: user.telefon || "",
-      }));
+    const stored =
+      JSON.parse(localStorage.getItem("loggedUser")) ||
+      JSON.parse(sessionStorage.getItem("loggedUser"));
+    setUser(stored);
+  }, []);
+
+  // 🔹 Preia barberul ales din pagina /barbers
+  useEffect(() => {
+    const selectedBarber = JSON.parse(localStorage.getItem("selectedBarber"));
+    if (selectedBarber) {
+      setForm((prev) => ({ ...prev, barber_id: selectedBarber.id }));
+      localStorage.removeItem("selectedBarber");
     }
   }, []);
 
-  // 🔄 când se schimbă data, încărcăm orele ocupate pentru acea zi
+  // 🔹 Încarcă frizerii
   useEffect(() => {
-    if (form.date) {
-      const [year, month, day] = form.date.split("-");
-      const formattedDate = `${month}/${day}/${year}`;
-      const allBookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-      const sameDay = allBookings.filter((b) => b.date === formattedDate);
-      setBookedTimes(sameDay.map((b) => b.time));
+    fetch("http://localhost/barbershop/frontend/backend/api/get_barbers.php")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setBarbers(data);
+      })
+      .catch(() => setBarbers([]));
+  }, []);
+
+  // 🔹 Încarcă zilele libere pentru frizerul selectat
+  useEffect(() => {
+    if (form.barber_id) {
+      fetch(
+        `http://localhost/barbershop/frontend/backend/api/get_holidays.php?barber_id=${form.barber_id}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) setHolidays(data);
+        })
+        .catch(() => setHolidays([]));
+    }
+  }, [form.barber_id]);
+
+  // 🔹 Obține orele ocupate
+  useEffect(() => {
+    if (form.date && form.barber_id) {
+      fetch(
+        `http://localhost/barbershop/frontend/backend/api/get_booked_times.php?date=${form.date}&barber_id=${form.barber_id}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          const normalized = data.map((t) => t.substring(0, 5));
+          setBookedTimes(normalized);
+        })
+        .catch(() => setBookedTimes([]));
     } else {
       setBookedTimes([]);
     }
-  }, [form.date]);
+  }, [form.date, form.barber_id]);
 
+  // 🔹 Verifică dacă data selectată e zi liberă
+  const isHoliday = holidays.includes(form.date);
+
+  // 🔹 Când schimbăm inputurile
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  // 🔹 Trimite programarea
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
 
-    const [year, month, day] = form.date.split("-");
-    const formattedDate = `${month}/${day}/${year}`;
+    if (!user) {
+      setMessage("Trebuie să fii logat pentru a face o programare!");
+      return;
+    }
 
-    const bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-    bookings.push({ ...form, date: formattedDate });
-    localStorage.setItem("bookings", JSON.stringify(bookings));
+    const { service, barber_id, date, time } = form;
+    if (!service || !barber_id || !date || !time) {
+      setMessage("Completează toate câmpurile!");
+      return;
+    }
 
-    alert("✅ Programarea a fost înregistrată cu succes!");
-    setForm((prev) => ({ ...prev, service: "", date: "", time: "" }));
+    // ⛔ Dacă e concediu, interzicem
+    if (isHoliday) {
+      setMessage("Frizerul este în concediu în această zi. Alege altă dată!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("client_id", user.id);
+    formData.append("barber_id", barber_id);
+    formData.append("nume", `${user.prenume} ${user.nume}`);
+    formData.append("telefon", user.telefon);
+    formData.append("service", service);
+    formData.append("date", date);
+    formData.append("time", time);
+
+    try {
+      const res = await fetch(
+        "http://localhost/barbershop/frontend/backend/api/book_appointment.php",
+        { method: "POST", body: formData }
+      );
+      const data = await res.json();
+
+      if (data.success) {
+        setMessage("✅ Programarea a fost înregistrată cu succes!");
+        setForm({ service: "", barber_id: "", date: "", time: "" });
+        setBookedTimes((prev) => [...prev, time]);
+      } else {
+        setMessage(data.error || "Eroare necunoscută!");
+      }
+    } catch (err) {
+      setMessage("Eroare la conexiunea cu serverul.");
+    }
   };
 
   return (
@@ -86,30 +159,17 @@ export default function Booking() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* 🔒 Date luate din profil */}
-          <input
-            type="text"
-            name="nume"
-            value={form.nume}
-            disabled
-            className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-[#b8a96f] cursor-not-allowed select-none text-base"
-          />
-          <input
-            type="text"
-            name="prenume"
-            value={form.prenume}
-            disabled
-            className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-[#b8a96f] cursor-not-allowed select-none text-base"
-          />
-          <input
-            type="tel"
-            name="telefon"
-            value={form.telefon}
-            disabled
-            className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-[#b8a96f] cursor-not-allowed select-none text-base"
-          />
+          {user && (
+            <div className="text-sm text-gray-300 mb-3">
+              Client:{" "}
+              <span className="text-[#d4af37] font-semibold">
+                {user.prenume} {user.nume}
+              </span>{" "}
+              ({user.telefon})
+            </div>
+          )}
 
-          {/* 🧴 Select servicii */}
+          {/* 🔸 Serviciu */}
           <select
             name="service"
             value={form.service}
@@ -124,50 +184,79 @@ export default function Booking() {
             <option value="Spălat + Coafat">Spălat + Coafat</option>
           </select>
 
-          {/* 📅 Data + ⏰ Ora */}
+          {/* 🔸 Barber */}
+          <div className="relative flex items-center">
+            <select
+              name="barber_id"
+              value={form.barber_id}
+              onChange={handleChange}
+              className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37] transition text-base appearance-none"
+              required
+            >
+              <option value="">— selectează frizerul —</option>
+              {barbers.map((b) => (
+                <option key={b.id} value={b.id}>
+                  ✂️ {b.nume} — {b.specializare}
+                </option>
+              ))}
+            </select>
+            <Scissors className="absolute right-3 text-[#d4af37] w-5 h-5 pointer-events-none" />
+          </div>
+
+          {/* 🔸 Data + Ora */}
           <div className="flex gap-3 items-center justify-between">
-            {/* Data */}
-            <div className="relative flex-1 flex items-center">
+            <div className="relative flex-1 flex items-center group">
               <input
                 ref={dateRef}
                 type="date"
                 name="date"
                 value={form.date}
                 onChange={handleChange}
-                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 pr-10 text-gray-200 focus:border-[#d4af37] transition text-base"
+                min={new Date().toISOString().split("T")[0]}
+                disabled={isHoliday}
+                className={`w-full bg-gradient-to-br from-[#111] to-[#1f1f1f] border rounded-md px-4 py-2 pr-10 text-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] transition text-base ${
+                  isHoliday
+                    ? "border-red-500 text-red-400 cursor-not-allowed"
+                    : "border-[#d4af37]/50"
+                }`}
                 required
               />
               <button
                 type="button"
                 onClick={() => dateRef.current.showPicker()}
-                className="absolute right-3 text-[#d4af37] hover:text-yellow-400 transition"
+                disabled={isHoliday}
+                className={`absolute right-3 ${
+                  isHoliday ? "text-red-500" : "text-[#d4af37]"
+                } hover:text-yellow-400 transition`}
               >
                 <CalendarDays className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Ora */}
             <div className="relative flex-1 flex items-center">
               <select
                 name="time"
                 value={form.time}
                 onChange={handleChange}
-                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 pr-10 text-gray-200 focus:border-[#d4af37] transition text-base appearance-none"
+                disabled={isHoliday}
+                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 pr-10 text-gray-200 focus:border-[#d4af37] transition text-base appearance-none disabled:text-gray-500 disabled:cursor-not-allowed"
                 required
               >
                 <option value="">HH:MM</option>
-                {timeSlots.map((t) => {
+                {allTimes.map((t) => {
                   const isBooked = bookedTimes.includes(t);
                   return (
                     <option
                       key={t}
-                      value={isBooked ? "" : t}
+                      value={t}
                       disabled={isBooked}
-                      className={`bg-[#1a1a1a] ${
-                        isBooked ? "text-gray-500 line-through" : "text-[#d4af37]"
-                      }`}
+                      className={
+                        isBooked
+                          ? "text-gray-500 bg-[#111]/70 cursor-not-allowed"
+                          : "text-[#d4af37]"
+                      }
                     >
-                      {t}
+                      {t} {isBooked ? "(ocupat)" : ""}
                     </option>
                   );
                 })}
@@ -176,16 +265,36 @@ export default function Booking() {
             </div>
           </div>
 
-          {/* Buton */}
+          {isHoliday && (
+            <p className="text-red-400 text-sm text-center mt-2">
+              Frizerul este în concediu în această zi. Alege altă dată.
+            </p>
+          )}
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
-            className="w-full mt-4 bg-[#d4af37] text-black font-semibold py-3 rounded-md hover:bg-transparent hover:text-[#d4af37] border border-[#d4af37] transition"
+            disabled={isHoliday}
+            className={`w-full mt-4 font-semibold py-3 rounded-md border transition ${
+              isHoliday
+                ? "bg-gray-700 text-gray-400 border-gray-600 cursor-not-allowed"
+                : "bg-[#d4af37] text-black hover:bg-transparent hover:text-[#d4af37] border-[#d4af37]"
+            }`}
           >
-            Programează-te acum
+            {isHoliday ? "Zile libere" : "Programează-te acum"}
           </motion.button>
         </form>
+
+        {message && (
+          <p
+            className={`mt-4 text-center text-sm ${
+              message.includes("succes") ? "text-green-400" : "text-red-400"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </motion.div>
     </section>
   );

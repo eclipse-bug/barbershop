@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/static/css/main.43c15cf1.css",
+    "main.js": "/static/js/main.541da2de.js",
+    "static/media/barbershop.jpg": "/static/media/barbershop.5edb5c8d6f27187bedee.jpg",
+    "index.html": "/index.html",
+    "main.43c15cf1.css.map": "/static/css/main.43c15cf1.css.map",
+    "main.541da2de.js.map": "/static/js/main.541da2de.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.43c15cf1.css",
+    "static/js/main.541da2de.js"
+  ]
+}

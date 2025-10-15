@@ -3,52 +3,58 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const [form, setForm] = useState({ nume: "", prenume: "", telefon: "" });
-  const [errors, setErrors] = useState({});
+  const [nume, setNume] = useState("");
+  const [prenume, setPrenume] = useState("");
+  const [telefon, setTelefon] = useState("");
+  const [message, setMessage] = useState("");
+  const [remember, setRemember] = useState(true); // implicit: ține-mă minte
   const navigate = useNavigate();
 
-  const normalizePhone = (num) => {
-    let clean = num.replace(/[\s()-]/g, "");
-    if (/^0\d{8}$/.test(clean)) {
-      clean = "+373" + clean.substring(1);
-    }
-    return clean;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    setErrors({ ...errors, [name]: "" });
-  };
-
-  const handleSubmit = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    let newErrors = {};
-    if (!form.nume.trim()) newErrors.nume = "Completează numele de familie.";
-    if (!form.prenume.trim()) newErrors.prenume = "Completează prenumele.";
-    if (!form.telefon.trim()) newErrors.telefon = "Introdu numărul de telefon.";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (!nume.trim() || !prenume.trim() || !telefon.trim()) {
+      setMessage("Completează toate câmpurile!");
       return;
     }
 
-    const normalized = normalizePhone(form.telefon);
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    const formData = new FormData();
+    formData.append("nume", nume);
+    formData.append("prenume", prenume);
+    formData.append("telefon", telefon);
 
-    // prevenim duplicate
-    if (users.some((u) => u.telefon === normalized)) {
-      alert("Acest număr este deja înregistrat!");
-      return;
+    try {
+      const res = await fetch(
+        "http://localhost/barbershop/frontend/backend/api/register_client.php",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        // ✅ Salvăm automat userul ca logat
+        const newUser = { nume, prenume, telefon };
+
+        if (remember) {
+          localStorage.setItem("loggedUser", JSON.stringify(newUser));
+        } else {
+          sessionStorage.setItem("loggedUser", JSON.stringify(newUser));
+        }
+
+        window.dispatchEvent(new Event("userUpdated")); // pentru Navbar
+
+        setMessage("Cont creat cu succes! Autentificare automată...");
+        setTimeout(() => navigate("/"), 1500);
+      } else {
+        setMessage(data.error || "A apărut o eroare la înregistrare.");
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Eroare la conexiunea cu serverul.");
     }
-
-    users.push({ ...form, telefon: normalized });
-    localStorage.setItem("users", JSON.stringify(users));
-
-    window.dispatchEvent(new Event("userUpdated"));
-    alert(`Înregistrare reușită pentru ${form.prenume} ${form.nume}!`);
-    navigate("/login");
   };
 
   return (
@@ -63,69 +69,92 @@ export default function Register() {
           Înregistrare Client
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleRegister} className="space-y-6">
+          {/* NUME */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Nume (Familie)</label>
+            <label className="block text-sm text-gray-300 mb-2">Nume</label>
             <input
               type="text"
-              name="nume"
-              value={form.nume}
-              onChange={handleChange}
-              placeholder="Munteanu"
-              className={`w-full bg-transparent border ${
-                errors.nume ? "border-red-500" : "border-[#d4af37]/30"
-              } text-white rounded-md px-4 py-2 focus:outline-none focus:border-[#d4af37] transition`}
+              value={nume}
+              onChange={(e) => {
+                setNume(e.target.value);
+                setMessage("");
+              }}
+              placeholder="Ex: Balan"
+              className="w-full bg-transparent border border-[#d4af37]/30 focus:border-[#d4af37] text-white rounded-md px-4 py-2 focus:outline-none transition"
             />
-            {errors.nume && <p className="text-red-500 text-xs mt-1">{errors.nume}</p>}
           </div>
 
+          {/* PRENUME */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Prenume (Nume mic)</label>
+            <label className="block text-sm text-gray-300 mb-2">Prenume</label>
             <input
               type="text"
-              name="prenume"
-              value={form.prenume}
-              onChange={handleChange}
-              placeholder="Denis"
-              className={`w-full bg-transparent border ${
-                errors.prenume ? "border-red-500" : "border-[#d4af37]/30"
-              } text-white rounded-md px-4 py-2 focus:outline-none focus:border-[#d4af37] transition`}
+              value={prenume}
+              onChange={(e) => {
+                setPrenume(e.target.value);
+                setMessage("");
+              }}
+              placeholder="Ex: Daniel"
+              className="w-full bg-transparent border border-[#d4af37]/30 focus:border-[#d4af37] text-white rounded-md px-4 py-2 focus:outline-none transition"
             />
-            {errors.prenume && <p className="text-red-500 text-xs mt-1">{errors.prenume}</p>}
           </div>
 
+          {/* TELEFON */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Număr de telefon</label>
+            <label className="block text-sm text-gray-300 mb-2">
+              Număr de telefon
+            </label>
             <input
               type="tel"
-              name="telefon"
-              value={form.telefon}
-              onChange={handleChange}
+              value={telefon}
+              onChange={(e) => {
+                setTelefon(e.target.value);
+                setMessage("");
+              }}
               placeholder="076784211 sau +37376784211"
               pattern="^(\+373\d{8}|0\d{8})$"
               title="Folosește formatul 076784211 sau +37376784211"
-              className={`w-full bg-transparent border ${
-                errors.telefon ? "border-red-500" : "border-[#d4af37]/30"
-              } text-white rounded-md px-4 py-2 focus:outline-none focus:border-[#d4af37] transition`}
+              className="w-full bg-transparent border border-[#d4af37]/30 focus:border-[#d4af37] text-white rounded-md px-4 py-2 focus:outline-none transition"
             />
-            {errors.telefon && <p className="text-red-500 text-xs mt-1">{errors.telefon}</p>}
           </div>
 
+          {/* Remember me */}
+          <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={() => setRemember(!remember)}
+              className="accent-[#d4af37] w-4 h-4"
+            />
+            Ține-mă minte
+          </label>
+
+          {/* BUTON */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
-            className="w-full mt-4 bg-[#d4af37] text-black font-semibold py-3 rounded-md hover:bg-transparent hover:text-[#d4af37] border border-[#d4af37] transition duration-300"
+            className="w-full mt-5 bg-[#d4af37] text-black font-semibold py-3 rounded-md hover:bg-transparent hover:text-[#d4af37] border border-[#d4af37] transition duration-300"
           >
-            Înregistrează-te
+            Creează cont
           </motion.button>
         </form>
 
-        <p className="text-center text-gray-400 text-sm mt-6">
-          Ai deja cont?{" "}
-          <a href="/login" className="text-[#d4af37] hover:underline">
-            Autentifică-te aici
-          </a>
+        {message && (
+          <p
+            className={`mt-4 text-center text-sm ${
+              message.includes("succes")
+                ? "text-green-400"
+                : "text-red-400"
+            }`}
+          >
+            {message}
+          </p>
+        )}
+
+        <p className="text-center text-gray-400 text-xs mt-8">
+          © 2025 Denis Barbershop. Toate drepturile rezervate.
         </p>
       </motion.div>
     </section>

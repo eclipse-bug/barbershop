@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import bgImage from "../assets/barbershop.jpg";
+import Footer from "../components/Footer";
+
 
 export default function Home() {
   return (
@@ -50,6 +52,7 @@ export default function Home() {
           Programează-te acum
         </motion.a>
       </motion.div>
+      <Footer />
     </section>
   );
 }
