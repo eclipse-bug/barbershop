@@ -7,7 +7,7 @@ export default function Barbers() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost/barbershop/frontend/backend/api/get_barbers.php")
+    fetch("http://localhost/barbershop/backend/api/get_barbers.php")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setBarbers(data);
@@ -49,7 +49,7 @@ export default function Barbers() {
             {/* ✂️ imagine + overlay */}
             <div className="relative">
               <img
-                src={`http://localhost/barbershop/frontend/backend/uploads/${barber.imagine || "default.jpg"}`}
+                src={`http://localhost/barbershop/backend/uploads/${barber.imagine || "default.jpg"}`}
                 alt={barber.nume}
                 className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-700"
               />

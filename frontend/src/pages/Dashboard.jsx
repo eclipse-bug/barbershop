@@ -27,7 +27,7 @@ export default function Dashboard() {
   const fetchAppointments = async (barberId) => {
     try {
       const res = await fetch(
-        `http://localhost/barbershop/frontend/backend/api/get_barber_appointments.php?barber_id=${barberId}`
+        `http://localhost/barbershop/backend/api/get_barber_appointments.php?barber_id=${barberId}`
       );
       const data = await res.json();
 
@@ -48,7 +48,7 @@ export default function Dashboard() {
   const fetchHolidays = async (barberId) => {
     try {
       const res = await fetch(
-        `http://localhost/barbershop/frontend/backend/api/get_holidays.php?barber_id=${barberId}`
+        `http://localhost/barbershop/backend/api/get_holidays.php?barber_id=${barberId}`
       );
       const data = await res.json();
       if (data.success) setHolidays(data.holidays);
@@ -67,7 +67,7 @@ export default function Dashboard() {
   const handleSave = async (id) => {
     try {
       const res = await fetch(
-        "http://localhost/barbershop/frontend/backend/api/update_appointment.php",
+        "http://localhost/barbershop/backend/api/update_appointment.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -95,7 +95,7 @@ export default function Dashboard() {
 
     try {
       const res = await fetch(
-        "http://localhost/barbershop/frontend/backend/api/delete_appointment.php",
+        "http://localhost/barbershop/backend/api/delete_appointment.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -124,7 +124,7 @@ export default function Dashboard() {
     }
     try {
       const res = await fetch(
-        "http://localhost/barbershop/frontend/backend/api/set_holiday.php",
+        "http://localhost/barbershop/backend/api/set_holiday.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -150,7 +150,7 @@ export default function Dashboard() {
     if (!window.confirm("Ștergi această zi liberă?")) return;
     try {
       const res = await fetch(
-        "http://localhost/barbershop/frontend/backend/api/delete_holiday.php",
+        "http://localhost/barbershop/backend/api/delete_holiday.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -172,17 +172,28 @@ export default function Dashboard() {
   };
 
   // 🔍 Filtrare avansată
-  const filteredAppointments = appointments.filter((a) => {
-    const term = search.toLowerCase().trim();
-    const normalizePhone = (num) =>
-      num ? num.replace("+373", "0").replace(/\s+/g, "").trim() : "";
+// 🔍 Filtrare avansată și tolerantă
+const filteredAppointments = appointments.filter((a) => {
+  const normalize = (str) =>
+    (str || "")
+      .toLowerCase()
+      .replace(/\s+/g, "") // elimină spațiile
+      .trim();
 
-    return (
-      a.client_nume.toLowerCase().includes(term) ||
-      a.client_prenume.toLowerCase().includes(term) ||
-      normalizePhone(a.client_telefon).includes(term.replace("+373", "0"))
-    );
-  });
+  const term = normalize(search);
+  const clientName = normalize(a.client_nume);
+  const phone = normalize(a.client_telefon);
+  const service = normalize(a.service);
+  const barber = normalize(a.barber_name);
+
+  return (
+    clientName.includes(term) ||
+    phone.includes(term) ||
+    service.includes(term) ||
+    barber.includes(term)
+  );
+});
+
 
   return (
     <section className="min-h-screen bg-[#0f0f0f] text-white p-8 overflow-auto">

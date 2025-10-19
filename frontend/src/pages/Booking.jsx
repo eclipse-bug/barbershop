@@ -4,6 +4,8 @@ import { CalendarDays, Clock, Scissors } from "lucide-react";
 
 export default function Booking() {
   const [form, setForm] = useState({
+    nume: "",
+    telefon: "",
     service: "",
     barber_id: "",
     date: "",
@@ -12,11 +14,11 @@ export default function Booking() {
   const [user, setUser] = useState(null);
   const [barbers, setBarbers] = useState([]);
   const [bookedTimes, setBookedTimes] = useState([]);
-  const [holidays, setHolidays] = useState([]); // 🔹 zile libere
+  const [holidays, setHolidays] = useState([]);
   const [message, setMessage] = useState("");
   const dateRef = useRef(null);
 
-  // 🔹 Ore disponibile
+  // 🔹 Ore disponibile (din 40 în 40 minute)
   const generateTimes = () => {
     const times = [];
     let start = 8 * 60;
@@ -50,7 +52,7 @@ export default function Booking() {
 
   // 🔹 Încarcă frizerii
   useEffect(() => {
-    fetch("http://localhost/barbershop/frontend/backend/api/get_barbers.php")
+    fetch("http://localhost/barbershop/backend/api/get_barbers.php")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setBarbers(data);
@@ -62,7 +64,7 @@ export default function Booking() {
   useEffect(() => {
     if (form.barber_id) {
       fetch(
-        `http://localhost/barbershop/frontend/backend/api/get_holidays.php?barber_id=${form.barber_id}`
+        `http://localhost/barbershop/backend/api/get_holidays.php?barber_id=${form.barber_id}`
       )
         .then((res) => res.json())
         .then((data) => {
@@ -76,7 +78,7 @@ export default function Booking() {
   useEffect(() => {
     if (form.date && form.barber_id) {
       fetch(
-        `http://localhost/barbershop/frontend/backend/api/get_booked_times.php?date=${form.date}&barber_id=${form.barber_id}`
+        `http://localhost/barbershop/backend/api/get_booked_times.php?date=${form.date}&barber_id=${form.barber_id}`
       )
         .then((res) => res.json())
         .then((data) => {
@@ -89,10 +91,8 @@ export default function Booking() {
     }
   }, [form.date, form.barber_id]);
 
-  // 🔹 Verifică dacă data selectată e zi liberă
   const isHoliday = holidays.includes(form.date);
 
-  // 🔹 Când schimbăm inputurile
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -101,48 +101,64 @@ export default function Booking() {
     e.preventDefault();
     setMessage("");
 
-    if (!user) {
-      setMessage("Trebuie să fii logat pentru a face o programare!");
-      return;
-    }
+    const { nume, telefon, service, barber_id, date, time } = form;
 
-    const { service, barber_id, date, time } = form;
     if (!service || !barber_id || !date || !time) {
-      setMessage("Completează toate câmpurile!");
+      setMessage("⚠ Completează toate câmpurile!");
       return;
     }
 
-    // ⛔ Dacă e concediu, interzicem
+    if (!user && (!nume || !telefon)) {
+      setMessage("⚠ Completează numele și telefonul!");
+      return;
+    }
+
     if (isHoliday) {
-      setMessage("Frizerul este în concediu în această zi. Alege altă dată!");
+      setMessage("Frizerul este în concediu în această zi.");
       return;
     }
 
     const formData = new FormData();
-    formData.append("client_id", user.id);
     formData.append("barber_id", barber_id);
-    formData.append("nume", `${user.prenume} ${user.nume}`);
-    formData.append("telefon", user.telefon);
     formData.append("service", service);
     formData.append("date", date);
     formData.append("time", time);
 
+    if (user) {
+      // Dacă e logat
+      formData.append("client_id", user.id);
+      formData.append("nume", `${user.prenume} ${user.nume}`);
+      formData.append("telefon", user.telefon);
+    } else {
+      // Dacă nu e logat
+      formData.append("client_id", 0);
+      formData.append("nume", nume);
+      formData.append("telefon", telefon);
+    }
+
     try {
       const res = await fetch(
-        "http://localhost/barbershop/frontend/backend/api/book_appointment.php",
+        "http://localhost/barbershop/backend/api/book_appointment.php",
         { method: "POST", body: formData }
       );
       const data = await res.json();
 
       if (data.success) {
         setMessage("✅ Programarea a fost înregistrată cu succes!");
-        setForm({ service: "", barber_id: "", date: "", time: "" });
+        setForm({
+          nume: "",
+          telefon: "",
+          service: "",
+          barber_id: "",
+          date: "",
+          time: "",
+        });
         setBookedTimes((prev) => [...prev, time]);
       } else {
-        setMessage(data.error || "Eroare necunoscută!");
+        setMessage(data.error || "⚠ Eroare necunoscută!");
       }
     } catch (err) {
-      setMessage("Eroare la conexiunea cu serverul.");
+      setMessage("⚠ Eroare la conexiunea cu serverul!");
     }
   };
 
@@ -159,14 +175,39 @@ export default function Booking() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {user && (
-            <div className="text-sm text-gray-300 mb-3">
+          {/* 🔸 Dacă userul e logat — afișăm numele */}
+          {user ? (
+            <div className="text-sm text-gray-300 mb-3 text-center">
               Client:{" "}
               <span className="text-[#d4af37] font-semibold">
                 {user.prenume} {user.nume}
               </span>{" "}
               ({user.telefon})
             </div>
+          ) : (
+            <>
+              {/* 🔹 Nume client */}
+              <input
+                type="text"
+                name="nume"
+                placeholder="Numele tău complet"
+                value={form.nume}
+                onChange={handleChange}
+                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37] transition text-base"
+                required
+              />
+
+              {/* 🔹 Telefon client */}
+              <input
+                type="tel"
+                name="telefon"
+                placeholder="Număr de telefon"
+                value={form.telefon}
+                onChange={handleChange}
+                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37] transition text-base"
+                required
+              />
+            </>
           )}
 
           {/* 🔸 Serviciu */}
@@ -203,7 +244,7 @@ export default function Booking() {
             <Scissors className="absolute right-3 text-[#d4af37] w-5 h-5 pointer-events-none" />
           </div>
 
-          {/* 🔸 Data + Ora */}
+          {/* 🔸 Dată + Oră */}
           <div className="flex gap-3 items-center justify-between">
             <div className="relative flex-1 flex items-center group">
               <input

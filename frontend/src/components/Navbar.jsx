@@ -8,7 +8,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // 🔁 Ascultă și actualizează utilizatorul fără refresh
+  // 🔁 Ascultă userul din local/session storage
   useEffect(() => {
     const syncUser = () => {
       const savedUser =
@@ -17,10 +17,7 @@ export default function Navbar() {
       setCurrentUser(savedUser);
     };
 
-    // Prima încărcare
     syncUser();
-
-    // Ascultă modificările din aplicație și localStorage
     window.addEventListener("userUpdated", syncUser);
     window.addEventListener("storage", syncUser);
 
@@ -36,11 +33,10 @@ export default function Navbar() {
     sessionStorage.removeItem("loggedUser");
     setCurrentUser(null);
     window.dispatchEvent(new Event("userUpdated"));
-    alert("Te-ai delogat cu succes!");
     navigate("/login");
   };
 
-  // 👑 Determină dacă este admin
+  // 👑 Verificăm dacă e admin
   const isAdmin =
     currentUser &&
     (
@@ -49,7 +45,7 @@ export default function Navbar() {
       currentUser.prenume?.toLowerCase() === "denis"
     );
 
-  // 🔗 Link-uri de navigare
+  // 🔗 Link-uri publice
   const navigationLinks = [
     { to: "/", label: "Acasă" },
     { to: "/services", label: "Servicii" },
@@ -71,7 +67,7 @@ export default function Navbar() {
       className="backdrop-blur-md bg-black/70 border-b border-[#d4af37]/30 sticky top-0 z-50"
     >
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex justify-between items-center">
-        {/* Logo */}
+        {/* 🔹 Logo */}
         <h1
           onClick={() => navigate("/")}
           className="text-2xl font-semibold text-[#d4af37] tracking-wide cursor-pointer select-none"
@@ -79,7 +75,7 @@ export default function Navbar() {
           Denis <span className="text-white">Barbershop</span>
         </h1>
 
-        {/* Meniu Desktop */}
+        {/* 🔹 Meniu Desktop */}
         <div className="hidden md:flex space-x-6 text-sm font-medium">
           {navigationLinks.map((link) => (
             <NavLink
@@ -96,33 +92,13 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Dreapta: user / login */}
+        {/* 🔹 Dreapta: doar admin login / dashboard */}
         <div className="hidden md:flex items-center gap-4">
-          {currentUser ? (
+          {isAdmin ? (
             <>
-              <div className="flex items-center gap-2">
-                <span className="text-[#d4af37] font-medium">
-                  Salut,{" "}
-                  <NavLink
-                    to="/profile"
-                    className="underline-offset-4 hover:underline"
-                  >
-                    {currentUser.prenume}
-                  </NavLink>
-                  !
-                </span>
-
-                {currentUser?.isAdmin && (
-  <motion.span
-    whileHover={{ scale: 1.1 }}
-    className="text-xs bg-[#d4af37] text-black font-semibold px-2 py-[2px] rounded-full uppercase tracking-wide"
-  >
-    Admin {currentUser.prenume}
-  </motion.span>
-)}
-
-              </div>
-
+              <span className="text-[#d4af37] font-medium">
+                Salut, {currentUser?.prenume || "Admin"}
+              </span>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 rounded-md border border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition"
@@ -131,20 +107,12 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <>
-              <NavLink
-                to="/login"
-                className="text-gray-300 hover:text-[#d4af37] transition"
-              >
-                Login
-              </NavLink>
-              <NavLink
-                to="/register"
-                className="px-4 py-2 rounded-md border border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition"
-              >
-                Register
-              </NavLink>
-            </>
+            <button
+              onClick={() => navigate("/login")}
+              className="px-4 py-2 rounded-md border border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition"
+            >
+              Admin Login
+            </button>
           )}
         </div>
 
@@ -157,7 +125,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Meniu mobil animat */}
+      {/* 🔹 Meniu mobil animat */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -182,12 +150,12 @@ export default function Navbar() {
               </NavLink>
             ))}
 
-            {/* 🔑 User (mobil) */}
+            {/* 🔑 Zona de login/logout pe mobil */}
             <div className="pt-4 border-t border-[#d4af37]/20">
-              {currentUser ? (
+              {isAdmin ? (
                 <>
                   <p className="text-[#d4af37] font-medium mb-2">
-                    {currentUser.prenume} {isAdmin && "(Admin)"}
+                    {currentUser?.prenume || "Admin"}
                   </p>
                   <button
                     onClick={() => {
@@ -200,22 +168,15 @@ export default function Navbar() {
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <NavLink
-                    to="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-300 hover:text-[#d4af37] transition"
-                  >
-                    Login
-                  </NavLink>
-                  <NavLink
-                    to="/register"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-2 rounded-md border border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition"
-                  >
-                    Register
-                  </NavLink>
-                </div>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate("/login");
+                  }}
+                  className="px-4 py-2 rounded-md border border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition"
+                >
+                  Admin Login
+                </button>
               )}
             </div>
           </motion.div>

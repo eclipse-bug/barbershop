@@ -6,7 +6,7 @@ export default function Services() {
   const [services, setServices] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost/barbershop/frontend/backend/api/get_services.php")
+    fetch("http://localhost/barbershop/backend/api/get_services.php")
       .then((res) => res.json())
       .then((data) => setServices(data))
       .catch((err) => console.error("Eroare API:", err));
