@@ -46,7 +46,7 @@ export default function Home() {
         <motion.a
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          href="/booking"
+          href="/barbers"
           className="inline-block bg-[#d4af37] text-black font-semibold py-3 px-6 rounded-md hover:bg-transparent hover:text-[#d4af37] border border-[#d4af37] transition duration-300 shadow-lg hover:shadow-[#d4af37]/30"
         >
           Programează-te acum

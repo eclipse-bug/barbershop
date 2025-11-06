@@ -7,20 +7,24 @@ body {
   color: #e5e5e5;
   font-family: 'Poppins', sans-serif;
 }
-/*Elimină iconița implicită neagră din input[type="date"] */
+
+/* Elimină iconița implicită neagră din input[type="date"] */
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0;
   display: none;
 }
+
+/* ✅ permite scroll normal pe toate paginile */
 html,
 body {
   height: 100%;
   margin: 0;
-  overflow: hidden; /* 🔥 elimină scroll-ul vertical */
+  overflow-x: hidden; /* doar orizontal interzis */
+  overflow-y: auto;   /* scroll vertical permis */
 }
 
 section {
-  min-height: 100vh; /* 🔥 fiecare secțiune ocupă ecranul complet */
+  min-height: 100vh; /* fiecare secțiune are ecranul complet */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -31,4 +35,15 @@ section {
 .main-content {
   padding-top: 80px; /* compensează navbarul sticky */
   box-sizing: border-box;
+}
+
+/* 🔒 Ascunde scrollbarul dar păstrează funcționalitatea scrollului */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent; /* ascunde complet track-ul */
+}
+
+html {
+  scrollbar-width: none; /* pentru Firefox */
+  -ms-overflow-style: none; /* pentru Edge vechi */
 }

@@ -18,22 +18,71 @@ export default function Booking() {
   const [message, setMessage] = useState("");
   const dateRef = useRef(null);
 
-  // 🔹 Ore disponibile (din 40 în 40 minute)
+  // ==== TIMP ====
+  const SLOT_MIN = 35; // 35 minute / slot
+
+  const addMinutes = (hhmm, minutes) => {
+    if (!hhmm) return null;
+    const [h, m] = hhmm.split(":").map(Number);
+    const total = h * 60 + m + minutes;
+    if (total < 0 || total >= 24 * 60) return null;
+    const H = String(Math.floor(total / 60)).padStart(2, "0");
+    const M = String(total % 60).padStart(2, "0");
+    return `${H}:${M}`;
+  };
+
+  const inBreak = (hhmm) => hhmm >= "13:00" && hhmm < "14:00";
+
+  // ✅ orele exacte pentru Denis (după poză)
+  const denisSchedule = [
+    "08:00",
+    "08:30",
+    "09:00",
+    "09:35",
+    "10:10",
+    "10:45",
+    "11:20",
+    "11:55",
+    "12:30",
+    "14:15",
+    "14:50",
+    "15:25",
+    "16:00",
+    "16:35",
+    "17:10",
+    "17:45",
+    "18:20",
+  ];
+
+  // 🔹 orar general (sau Denis dacă e selectat)
   const generateTimes = () => {
+    // caută frizerul selectat în listă
+    const selectedBarber = barbers.find(
+      (b) => String(b.id) === String(form.barber_id)
+    );
+
+    // dacă numele conține "denis", returnăm orarul special
+    if (selectedBarber && selectedBarber.nume?.toLowerCase().includes("denis")) {
+      return denisSchedule;
+    }
+
+    // altfel, orarul standard din 35 în 35 minute
     const times = [];
-    let start = 8 * 60;
-    const end = 20 * 60;
+    let start = 8 * 60; // 08:00
+    const end = 20 * 60; // 20:00
     while (start <= end) {
       const h = Math.floor(start / 60).toString().padStart(2, "0");
       const m = (start % 60).toString().padStart(2, "0");
-      times.push(`${h}:${m}`);
-      start += 40;
+      const t = `${h}:${m}`;
+      if (!inBreak(t)) times.push(t);
+      start += SLOT_MIN;
     }
     return times;
   };
+
   const allTimes = generateTimes();
 
-  // 🔹 Citim userul logat
+  // ==== USER LOGAT ====
   useEffect(() => {
     const stored =
       JSON.parse(localStorage.getItem("loggedUser")) ||
@@ -41,7 +90,7 @@ export default function Booking() {
     setUser(stored);
   }, []);
 
-  // 🔹 Preia barberul ales din pagina /barbers
+  // ==== BARBER PRESELECTAT DIN /barbers ====
   useEffect(() => {
     const selectedBarber = JSON.parse(localStorage.getItem("selectedBarber"));
     if (selectedBarber) {
@@ -50,7 +99,7 @@ export default function Booking() {
     }
   }, []);
 
-  // 🔹 Încarcă frizerii
+  // ==== ÎNCARCĂ FRIZERII ====
   useEffect(() => {
     fetch("http://localhost/barbershop/backend/api/get_barbers.php")
       .then((res) => res.json())
@@ -60,7 +109,7 @@ export default function Booking() {
       .catch(() => setBarbers([]));
   }, []);
 
-  // 🔹 Încarcă zilele libere pentru frizerul selectat
+  // ==== ZILE LIBERE ALE FRIZERULUI ====
   useEffect(() => {
     if (form.barber_id) {
       fetch(
@@ -74,7 +123,7 @@ export default function Booking() {
     }
   }, [form.barber_id]);
 
-  // 🔹 Obține orele ocupate
+  // ==== ORE OCUPATE PENTRU DATA+FRIZER ====
   useEffect(() => {
     if (form.date && form.barber_id) {
       fetch(
@@ -82,7 +131,7 @@ export default function Booking() {
       )
         .then((res) => res.json())
         .then((data) => {
-          const normalized = data.map((t) => t.substring(0, 5));
+          const normalized = (data || []).map((t) => t.substring(0, 5));
           setBookedTimes(normalized);
         })
         .catch(() => setBookedTimes([]));
@@ -92,11 +141,27 @@ export default function Booking() {
   }, [form.date, form.barber_id]);
 
   const isHoliday = holidays.includes(form.date);
-
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // 🔹 Trimite programarea
+  const needsDoubleSlot = form.service === "Tuns + Barbă";
+
+  const isTimeSelectable = (t) => {
+    const booked = bookedTimes.includes(t);
+    if (booked) return false;
+    if (inBreak(t)) return false;
+
+    if (needsDoubleSlot) {
+      const next = addMinutes(t, SLOT_MIN);
+      if (!next) return false;
+      if (inBreak(next)) return false;
+      if (bookedTimes.includes(next)) return false;
+      if (!allTimes.includes(next)) return false;
+    }
+    return true;
+  };
+
+  // ==== SUBMIT ====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -107,56 +172,95 @@ export default function Booking() {
       setMessage("⚠ Completează toate câmpurile!");
       return;
     }
-
     if (!user && (!nume || !telefon)) {
       setMessage("⚠ Completează numele și telefonul!");
       return;
     }
-
     if (isHoliday) {
       setMessage("Frizerul este în concediu în această zi.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("barber_id", barber_id);
-    formData.append("service", service);
-    formData.append("date", date);
-    formData.append("time", time);
-
-    if (user) {
-      // Dacă e logat
-      formData.append("client_id", user.id);
-      formData.append("nume", `${user.prenume} ${user.nume}`);
-      formData.append("telefon", user.telefon);
-    } else {
-      // Dacă nu e logat
-      formData.append("client_id", 0);
-      formData.append("nume", nume);
-      formData.append("telefon", telefon);
+    const next = needsDoubleSlot ? addMinutes(time, SLOT_MIN) : null;
+    if (needsDoubleSlot) {
+      if (!next) {
+        setMessage("⚠ Nu există slotul următor disponibil pentru acest serviciu.");
+        return;
+      }
+      if (inBreak(time) || inBreak(next)) {
+        setMessage("⚠ Programarea nu poate fi peste pauza 13:00–14:00.");
+        return;
+      }
+      if (!allTimes.includes(next)) {
+        setMessage("⚠ Slotul următor iese din programul zilnic.");
+        return;
+      }
+      if (bookedTimes.includes(time) || bookedTimes.includes(next)) {
+        setMessage("⚠ Ai ales o oră fără două sloturi consecutive libere.");
+        return;
+      }
     }
 
-    try {
-      const res = await fetch(
-        "http://localhost/barbershop/backend/api/book_appointment.php",
-        { method: "POST", body: formData }
-      );
-      const data = await res.json();
-
-      if (data.success) {
-        setMessage("✅ Programarea a fost înregistrată cu succes!");
-        setForm({
-          nume: "",
-          telefon: "",
-          service: "",
-          barber_id: "",
-          date: "",
-          time: "",
-        });
-        setBookedTimes((prev) => [...prev, time]);
+    const makeFormData = (clock) => {
+      const fd = new FormData();
+      fd.append("barber_id", barber_id);
+      fd.append("service", service);
+      fd.append("date", date);
+      fd.append("time", clock);
+      if (user) {
+        fd.append("client_id", user.id);
+        fd.append("nume", `${user.prenume} ${user.nume}`);
+        fd.append("telefon", user.telefon);
       } else {
-        setMessage(data.error || "⚠ Eroare necunoscută!");
+        fd.append("client_id", 0);
+        fd.append("nume", nume);
+        fd.append("telefon", telefon);
       }
+      return fd;
+    };
+
+    try {
+      const res1 = await fetch(
+        "http://localhost/barbershop/backend/api/book_appointment.php",
+        { method: "POST", body: makeFormData(time) }
+      );
+      const data1 = await res1.json();
+      if (!data1?.success) {
+        setMessage(data1?.error || "⚠ Eroare la rezervarea primului slot.");
+        return;
+      }
+
+      if (needsDoubleSlot && next) {
+        const res2 = await fetch(
+          "http://localhost/barbershop/backend/api/book_appointment.php",
+          { method: "POST", body: makeFormData(next) }
+        );
+        const data2 = await res2.json();
+        if (!data2?.success) {
+          setMessage(
+            data2?.error ||
+              "⚠ Primul slot a fost rezervat, dar al doilea nu a putut fi blocat."
+          );
+          setBookedTimes((prev) => Array.from(new Set([...prev, time])));
+          return;
+        }
+      }
+
+      setBookedTimes((prev) =>
+        needsDoubleSlot && next
+          ? Array.from(new Set([...prev, time, next]))
+          : Array.from(new Set([...prev, time]))
+      );
+
+      setMessage("✅ Programarea a fost înregistrată cu succes!");
+      setForm({
+        nume: "",
+        telefon: "",
+        service: "",
+        barber_id: "",
+        date: "",
+        time: "",
+      });
     } catch (err) {
       setMessage("⚠ Eroare la conexiunea cu serverul!");
     }
@@ -175,7 +279,6 @@ export default function Booking() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* 🔸 Dacă userul e logat — afișăm numele */}
           {user ? (
             <div className="text-sm text-gray-300 mb-3 text-center">
               Client:{" "}
@@ -186,7 +289,6 @@ export default function Booking() {
             </div>
           ) : (
             <>
-              {/* 🔹 Nume client */}
               <input
                 type="text"
                 name="nume"
@@ -196,8 +298,6 @@ export default function Booking() {
                 className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37] transition text-base"
                 required
               />
-
-              {/* 🔹 Telefon client */}
               <input
                 type="tel"
                 name="telefon"
@@ -210,7 +310,6 @@ export default function Booking() {
             </>
           )}
 
-          {/* 🔸 Serviciu */}
           <select
             name="service"
             value={form.service}
@@ -225,7 +324,6 @@ export default function Booking() {
             <option value="Spălat + Coafat">Spălat + Coafat</option>
           </select>
 
-          {/* 🔸 Barber */}
           <div className="relative flex items-center">
             <select
               name="barber_id"
@@ -237,14 +335,13 @@ export default function Booking() {
               <option value="">— selectează frizerul —</option>
               {barbers.map((b) => (
                 <option key={b.id} value={b.id}>
-                  ✂️ {b.nume} — {b.specializare}
+                  {b.nume} — {b.specializare}
                 </option>
               ))}
             </select>
             <Scissors className="absolute right-3 text-[#d4af37] w-5 h-5 pointer-events-none" />
           </div>
 
-          {/* 🔸 Dată + Oră */}
           <div className="flex gap-3 items-center justify-between">
             <div className="relative flex-1 flex items-center group">
               <input
@@ -264,7 +361,7 @@ export default function Booking() {
               />
               <button
                 type="button"
-                onClick={() => dateRef.current.showPicker()}
+                onClick={() => dateRef.current?.showPicker?.()}
                 disabled={isHoliday}
                 className={`absolute right-3 ${
                   isHoliday ? "text-red-500" : "text-[#d4af37]"
@@ -285,19 +382,24 @@ export default function Booking() {
               >
                 <option value="">HH:MM</option>
                 {allTimes.map((t) => {
-                  const isBooked = bookedTimes.includes(t);
+                  const disabled = !isTimeSelectable(t);
                   return (
                     <option
                       key={t}
                       value={t}
-                      disabled={isBooked}
+                      disabled={disabled}
                       className={
-                        isBooked
+                        disabled
                           ? "text-gray-500 bg-[#111]/70 cursor-not-allowed"
                           : "text-[#d4af37]"
                       }
                     >
-                      {t} {isBooked ? "(ocupat)" : ""}
+                      {t}
+                      {bookedTimes.includes(t)
+                        ? " (ocupat)"
+                        : needsDoubleSlot && disabled
+                        ? " (nu sunt 2 sloturi libere)"
+                        : ""}
                     </option>
                   );
                 })}
@@ -336,6 +438,10 @@ export default function Booking() {
             {message}
           </p>
         )}
+
+        <p className="mt-3 text-center text-xs text-gray-400">
+          Pauză zilnică: 13:00–14:00 (nu se fac programări).
+        </p>
       </motion.div>
     </section>
   );

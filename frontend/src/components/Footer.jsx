@@ -36,9 +36,9 @@ export default function Footer() {
               href="tel:+37376784211"
               className="hover:text-[#d4af37] transition"
             >
-              +373 767 842 11
+              +373 692 25 738
             </a>
-          </div>
+          </div>  
 
           <div className="flex items-center gap-2">
             <Clock size={15} className="text-[#d4af37]" />

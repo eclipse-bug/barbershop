@@ -8,10 +8,9 @@ export default function Dashboard() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
-  const [holidays, setHolidays] = useState([]); // 🌴 adăugat pentru concedii
+  const [holidays, setHolidays] = useState([]);
   const [selectedHoliday, setSelectedHoliday] = useState("");
 
-  // 🧩 Preluăm userul logat
   useEffect(() => {
     const stored =
       JSON.parse(localStorage.getItem("loggedUser")) ||
@@ -23,7 +22,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // 🔄 Încarcă programările
   const fetchAppointments = async (barberId) => {
     try {
       const res = await fetch(
@@ -44,7 +42,6 @@ export default function Dashboard() {
     }
   };
 
-  // 🔁 Încarcă zilele libere din DB
   const fetchHolidays = async (barberId) => {
     try {
       const res = await fetch(
@@ -57,13 +54,11 @@ export default function Dashboard() {
     }
   };
 
-  // 🧩 Începem editarea
   const handleEdit = (appt) => {
     setEditingId(appt.id);
     setEdited({ date: appt.date, time: appt.time });
   };
 
-  // 💾 Salvăm modificările
   const handleSave = async (id) => {
     try {
       const res = await fetch(
@@ -89,7 +84,7 @@ export default function Dashboard() {
     }
   };
 
-  // 🗑️ Ștergere programare
+  // 🗑️ Șterge o programare individuală
   const handleDelete = async (id) => {
     if (!window.confirm("Sigur vrei să ștergi această programare?")) return;
 
@@ -116,7 +111,6 @@ export default function Dashboard() {
     }
   };
 
-  // 🌴 Adaugă zi liberă
   const handleAddHoliday = async () => {
     if (!selectedHoliday) {
       setMessage("⚠ Selectează o dată pentru concediu!");
@@ -145,7 +139,6 @@ export default function Dashboard() {
     }
   };
 
-  // 🗑️ Șterge o zi liberă
   const handleDeleteHoliday = async (date) => {
     if (!window.confirm("Ștergi această zi liberă?")) return;
     try {
@@ -171,41 +164,69 @@ export default function Dashboard() {
     }
   };
 
-  // 🔍 Filtrare avansată
-// 🔍 Filtrare avansată și tolerantă
-const filteredAppointments = appointments.filter((a) => {
-  const normalize = (str) =>
-    (str || "")
-      .toLowerCase()
-      .replace(/\s+/g, "") // elimină spațiile
-      .trim();
+  // ✅ Șterge TOATE programările vechi (din zilele trecute)
+  const handleCleanupOldAppointments = async () => {
+    if (!window.confirm("Sigur vrei să ștergi toate programările din zilele trecute?")) return;
 
-  const term = normalize(search);
-  const clientName = normalize(a.client_nume);
-  const phone = normalize(a.client_telefon);
-  const service = normalize(a.service);
-  const barber = normalize(a.barber_name);
+    try {
+      const res = await fetch(
+        "http://localhost/barbershop/backend/api/delete_old_appointments.php"
+      );
+      const data = await res.json();
+      if (data.success) {
+        setMessage(`🧹 ${data.message} (Șterse: ${data.deleted_count})`);
+        if (user) fetchAppointments(user.id);
+      } else {
+        setMessage("⚠ Eroare la curățare!");
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("⚠ Eroare de conexiune la server!");
+    } finally {
+      setTimeout(() => setMessage(""), 3000);
+    }
+  };
+
+  const filteredAppointments = appointments.filter((a) => {
+    const normalize = (str) =>
+      (str || "").toLowerCase().replace(/\s+/g, "").trim();
+
+    const term = normalize(search);
+    const clientName = normalize(a.client_nume);
+    const phone = normalize(a.client_telefon);
+    const service = normalize(a.service);
+    const barber = normalize(a.barber_name);
+
+    return (
+      clientName.includes(term) ||
+      phone.includes(term) ||
+      service.includes(term) ||
+      barber.includes(term)
+    );
+  });
 
   return (
-    clientName.includes(term) ||
-    phone.includes(term) ||
-    service.includes(term) ||
-    barber.includes(term)
-  );
-});
-
-
-  return (
-    <section className="min-h-screen bg-[#0f0f0f] text-white p-8 overflow-auto">
+    <section className="bg-[#0f0f0f] text-white p-8 flex justify-center">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-6xl mx-auto bg-black/40 border border-[#d4af37]/40 rounded-2xl p-8 shadow-lg"
+        className="w-full max-w-6xl bg-black/40 border border-[#d4af37]/40 rounded-2xl p-8 shadow-lg 
+                 overflow-y-auto h-[calc(100vh-120px)]"
       >
         <h1 className="text-3xl font-bold text-[#d4af37] mb-4 text-center">
           Dashboard — {user?.prenume || "Barber"}
         </h1>
+
+        {/* 🧹 Buton pentru ștergerea automată a programărilor vechi */}
+        <div className="flex justify-center mb-6">
+          <button
+            onClick={handleCleanupOldAppointments}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-md transition border border-red-400 hover:border-red-500"
+          >
+            🧹 Șterge programările vechi
+          </button>
+        </div>
 
         {/* 🌴 Zile libere / Concediu */}
         <div className="mb-8 bg-[#1a1a1a]/50 border border-[#d4af37]/30 rounded-xl p-5">
@@ -264,7 +285,8 @@ const filteredAppointments = appointments.filter((a) => {
             className={`text-center mb-4 font-medium ${
               message.includes("✅") ||
               message.includes("🗑️") ||
-              message.includes("🌴")
+              message.includes("🌴") ||
+              message.includes("🧹")
                 ? "text-green-400"
                 : "text-red-400"
             }`}
@@ -279,7 +301,7 @@ const filteredAppointments = appointments.filter((a) => {
             Niciun rezultat găsit pentru termenul introdus.
           </p>
         ) : (
-          <div className="overflow-x-auto max-h-[70vh]">
+          <div className="overflow-auto rounded-lg">
             <table className="w-full text-sm border-collapse">
               <thead className="bg-[#1a1a1a] text-[#d4af37] sticky top-0">
                 <tr>

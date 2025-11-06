@@ -49,7 +49,6 @@ export default function Navbar() {
   const navigationLinks = [
     { to: "/", label: "Acasă" },
     { to: "/services", label: "Servicii" },
-    { to: "/barbers", label: "Barberi" },
     { to: "/booking", label: "Programări" },
     { to: "/about", label: "Despre noi" },
     { to: "/contact", label: "Contact" },

@@ -12,7 +12,6 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Barbers from "./pages/Barbers";
 
-
 // ✅ verifică dacă e admin
 const AdminRoute = ({ children }) => {
   const user =
@@ -25,7 +24,8 @@ const AdminRoute = ({ children }) => {
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col">
+      {/* 🔧 adăugat overflow-y-auto pentru scroll global */}
+      <div className="min-h-screen flex flex-col overflow-y-auto">
         <Navbar />
         <main className="flex-grow">
           <Routes>
