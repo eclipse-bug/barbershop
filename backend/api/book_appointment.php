@@ -1,0 +1,59 @@
+<?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json; charset=UTF-8");
+
+require_once "../config/db.php";
+
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+    http_response_code(200);
+    exit;
+}
+
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    echo json_encode(["error" => "Metodă invalidă."]);
+    exit;
+}
+
+// 🧾 Preluăm datele din formular
+$nume      = trim($_POST["nume"] ?? "");
+$telefon   = trim($_POST["telefon"] ?? "");
+$service   = trim($_POST["service"] ?? "");
+$date      = trim($_POST["date"] ?? "");
+$time      = trim($_POST["time"] ?? "");
+$barber_id = $_POST["barber_id"] ?? null;
+
+// 🔒 Validare minimă
+if (!$nume || !$telefon || !$service || !$date || !$time || !$barber_id) {
+    echo json_encode(["error" => "Completează toate câmpurile!"]);
+    exit;
+}
+
+try {
+    // ⚠️ Verificăm dacă ora este deja ocupată pentru acel frizer
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM appointments 
+        WHERE barber_id = ? AND date = ? AND time = ?
+    ");
+    $stmt->execute([$barber_id, $date, $time]);
+    $exists = $stmt->fetchColumn();
+
+    if ($exists > 0) {
+        echo json_encode(["error" => "Ora selectată este deja ocupată!"]);
+        exit;
+    }
+
+    // ✅ Inserăm programarea fără a fi nevoie de cont (client_id = NULL)
+    $stmt = $conn->prepare("
+        INSERT INTO appointments (client_id, nume, telefon, service, date, time, barber_id)
+        VALUES (NULL, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->execute([$nume, $telefon, $service, $date, $time, $barber_id]);
+
+    echo json_encode(["success" => true, "message" => "✅ Programarea a fost înregistrată cu succes!"]);
+} catch (PDOException $e) {
+    echo json_encode(["error" => "Eroare DB: " . $e->getMessage()]);
+}
+?>
