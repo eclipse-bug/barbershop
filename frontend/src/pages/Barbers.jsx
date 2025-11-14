@@ -21,12 +21,8 @@ export default function Barbers() {
   };
 
   return (
-    <section className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] text-white flex flex-col items-center justify-center relative overflow-hidden">
-      {/* ✨ efecte ambientale */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-[400px] h-[400px] bg-[#d4af37]/15 blur-[150px] top-10 left-[-150px] rounded-full"></div>
-        <div className="absolute w-[500px] h-[500px] bg-[#d4af37]/10 blur-[180px] bottom-10 right-[-200px] rounded-full"></div>
-      </div>
+    <section className="min-h-screen text-white flex flex-col items-center justify-center relative overflow-hidden pb-24 md:pb-28">
+      {/* ❌ Eliminat gradientul și efectele ambientale */}
 
       <motion.h2
         initial={{ opacity: 0, y: -20 }}
@@ -37,7 +33,6 @@ export default function Barbers() {
         Alege frizerul tău preferat
       </motion.h2>
 
-      {/* 🧑‍🔧 Barberii centrați pe mijloc */}
       <div className="flex flex-wrap justify-center items-center gap-12 px-6 z-10 max-w-6xl">
         {barbers.map((barber) => (
           <motion.div
@@ -46,7 +41,6 @@ export default function Barbers() {
             transition={{ type: "spring", stiffness: 200 }}
             className="group relative w-[320px] bg-gradient-to-br from-[#111] to-[#1f1f1f] rounded-3xl border border-[#d4af37]/40 shadow-[0_0_20px_rgba(212,175,55,0.15)] hover:shadow-[0_0_35px_rgba(212,175,55,0.4)] overflow-hidden transform-gpu transition-all duration-300"
           >
-            {/* ✂️ imagine + overlay */}
             <div className="relative">
               <img
                 src={`http://localhost/barbershop/backend/uploads/${barber.imagine || "default.jpg"}`}
@@ -58,13 +52,9 @@ export default function Barbers() {
                 <h3 className="text-3xl font-semibold text-[#d4af37] tracking-wide drop-shadow-md">
                   {barber.nume}
                 </h3>
-                <p className="text-gray-300 italic mt-1 text-sm">
-                  {barber.specializare}
-                </p>
               </div>
             </div>
 
-            {/* 💬 descriere + buton */}
             <div className="p-6 text-center">
               <p className="text-gray-400 text-sm mb-6 leading-relaxed">
                 {barber.nume} oferă servicii premium și o experiență unică

@@ -8,13 +8,24 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // 🔁 Ascultă userul din local/session storage
+  // 🔁 Sincronizare user cu local/sessionStorage
   useEffect(() => {
     const syncUser = () => {
-      const savedUser =
-        JSON.parse(localStorage.getItem("loggedUser")) ||
-        JSON.parse(sessionStorage.getItem("loggedUser"));
-      setCurrentUser(savedUser);
+      const rawUser =
+        localStorage.getItem("loggedUser") ||
+        sessionStorage.getItem("loggedUser");
+
+      if (!rawUser || rawUser === "undefined" || rawUser === "null") {
+        setCurrentUser(null);
+        return;
+      }
+
+      try {
+        setCurrentUser(JSON.parse(rawUser));
+      } catch {
+        console.warn("User JSON invalid");
+        setCurrentUser(null);
+      }
     };
 
     syncUser();
@@ -27,13 +38,13 @@ export default function Navbar() {
     };
   }, []);
 
-  // 🔒 Logout
+  // 🔒 Logout complet
   const handleLogout = () => {
-    localStorage.removeItem("loggedUser");
-    sessionStorage.removeItem("loggedUser");
+    localStorage.clear();
+    sessionStorage.clear();
     setCurrentUser(null);
     window.dispatchEvent(new Event("userUpdated"));
-    navigate("/login");
+    navigate("/"); // redirecționează spre homepage
   };
 
   // 👑 Verificăm dacă e admin
@@ -45,7 +56,6 @@ export default function Navbar() {
       currentUser.prenume?.toLowerCase() === "denis"
     );
 
-  // 🔗 Link-uri publice
   const navigationLinks = [
     { to: "/", label: "Acasă" },
     { to: "/services", label: "Servicii" },
@@ -63,10 +73,9 @@ export default function Navbar() {
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-md bg-black/70 border-b border-[#d4af37]/30 sticky top-0 z-50"
+      className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-[#d4af37]/30"
     >
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex justify-between items-center">
-        {/* 🔹 Logo */}
         <h1
           onClick={() => navigate("/")}
           className="text-2xl font-semibold text-[#d4af37] tracking-wide cursor-pointer select-none"
@@ -74,7 +83,7 @@ export default function Navbar() {
           Denis <span className="text-white">Barbershop</span>
         </h1>
 
-        {/* 🔹 Meniu Desktop */}
+        {/* Meniu Desktop */}
         <div className="hidden md:flex space-x-6 text-sm font-medium">
           {navigationLinks.map((link) => (
             <NavLink
@@ -91,7 +100,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* 🔹 Dreapta: doar admin login / dashboard */}
+        {/* Dreapta */}
         <div className="hidden md:flex items-center gap-4">
           {isAdmin ? (
             <>
@@ -115,7 +124,7 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* 🔽 Meniu mobil */}
+        {/* Meniu Mobil */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="md:hidden text-[#d4af37] focus:outline-none"
@@ -124,7 +133,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* 🔹 Meniu mobil animat */}
+      {/* Meniu mobil animat */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -149,7 +158,6 @@ export default function Navbar() {
               </NavLink>
             ))}
 
-            {/* 🔑 Zona de login/logout pe mobil */}
             <div className="pt-4 border-t border-[#d4af37]/20">
               {isAdmin ? (
                 <>

@@ -3,7 +3,7 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 export default function Contact() {
   return (
-    <section className="min-h-screen bg-[#0f0f0f] text-white flex flex-col items-center py-16">
+    <section className="min-h-screen text-white flex flex-col items-center py-16">
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -49,23 +49,10 @@ export default function Contact() {
             <Clock className="text-[#d4af37]" size={20} />
             <p>
               <span className="text-[#d4af37] font-semibold">Program:</span>{" "}
-              Luni - Duminică, 09:00 - 18:00
+              Luni - Sîmbătă, 09:00 - 18:00
             </p>
           </div>
 
-          {/* Email */}
-          <div className="flex items-center gap-3">
-            <Mail className="text-[#d4af37]" size={20} />
-            <p>
-              <span className="text-[#d4af37] font-semibold">Email:</span>{" "}
-              <a
-                href="mailto:denisbarbershop@gmail.com"
-                className="hover:underline"
-              >
-                denisbarbershop@gmail.com
-              </a>
-            </p>
-          </div>
         </div>
       </motion.div>
     </section>

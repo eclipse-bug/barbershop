@@ -9,10 +9,17 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedUser =
-      JSON.parse(localStorage.getItem("loggedUser")) ||
-      JSON.parse(sessionStorage.getItem("loggedUser"));
-    if (savedUser?.isAdmin) navigate("/dashboard");
+    const rawUser =
+      localStorage.getItem("loggedUser") || sessionStorage.getItem("loggedUser");
+
+    if (!rawUser || rawUser === "undefined" || rawUser === "null") return;
+
+    try {
+      const savedUser = JSON.parse(rawUser);
+      if (savedUser?.isAdmin) navigate("/dashboard");
+    } catch {
+      console.warn("Date invalide în localStorage/sessionStorage");
+    }
   }, [navigate]);
 
   const handleLogin = async (e) => {
@@ -40,8 +47,6 @@ export default function Login() {
 
       localStorage.setItem("loggedUser", JSON.stringify(data.user));
       window.dispatchEvent(new Event("userUpdated"));
-
-      alert(`✅ Bun venit, ${data.user.prenume} (Admin)!`);
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
@@ -50,7 +55,7 @@ export default function Login() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-[#0f0f0f] text-white">
+    <section className="min-h-screen flex items-center justify-center text-white">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
