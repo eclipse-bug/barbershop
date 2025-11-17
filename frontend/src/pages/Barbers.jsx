@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 export default function Barbers() {
   const [barbers, setBarbers] = useState([]);
   const navigate = useNavigate();
+  const baseUrl = process.env.REACT_APP_BASE_URL;
 
   useEffect(() => {
-    fetch("http://localhost/barbershop/backend/api/get_barbers.php")
+    fetch(baseUrl + "/get_barbers.php")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setBarbers(data);
@@ -43,7 +44,7 @@ export default function Barbers() {
           >
             <div className="relative">
               <img
-                src={`http://localhost/barbershop/backend/uploads/${barber.imagine || "default.jpg"}`}
+                src={"default.jpg"}
                 alt={barber.nume}
                 className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-700"
               />

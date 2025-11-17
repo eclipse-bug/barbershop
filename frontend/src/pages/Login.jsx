@@ -32,7 +32,8 @@ export default function Login() {
     }
 
     try {
-      const response = await fetch("http://localhost/barbershop/backend/api/verify_admin.php", {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
+      const response = await fetch(baseUrl + "/verify_admin.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ telefon, adminCode }),

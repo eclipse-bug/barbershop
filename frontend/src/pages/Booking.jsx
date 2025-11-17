@@ -46,6 +46,7 @@ export default function Booking() {
   };
 
   const [availableTimes, setAvailableTimes] = useState(generateTimes());
+  const baseUrl = process.env.REACT_APP_BASE_URL;
 
   // user logat
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function Booking() {
 
   // lista frizerilor
   useEffect(() => {
-    fetch("http://localhost/barbershop/backend/api/get_barbers.php")
+    fetch(baseUrl + "/get_barbers.php")
       .then((r) => r.json())
       .then((d) => Array.isArray(d) && setBarbers(d))
       .catch(() => setBarbers([]));
@@ -72,7 +73,7 @@ export default function Booking() {
   // zile libere
   useEffect(() => {
     if (!form.barber_id) return;
-    fetch(`http://localhost/barbershop/backend/api/get_holidays.php?barber_id=${form.barber_id}`)
+    fetch(baseUrl + `/get_holidays.php?barber_id=${form.barber_id}`)
       .then((r) => r.json())
       .then((d) => {
         if (Array.isArray(d?.holidays))
@@ -85,7 +86,7 @@ export default function Booking() {
   useEffect(() => {
     if (!form.barber_id || !form.date) return;
     fetch(
-      `http://localhost/barbershop/backend/api/get_booked_times.php?barber_id=${form.barber_id}&date=${form.date}`
+      baseUrl + `/get_booked_times.php?barber_id=${form.barber_id}&date=${form.date}`
     )
       .then((r) => r.json())
       .then((d) => setBookedTimes((d || []).map((x) => x.substring(0, 5))))
@@ -144,7 +145,7 @@ export default function Booking() {
     }
 
     const res = await fetch(
-      "http://localhost/barbershop/backend/api/book_appointment.php",
+      baseUrl + "/book_appointment.php",
       { method: "POST", body: fd }
     );
 
@@ -154,7 +155,7 @@ export default function Booking() {
     if (data.success) {
       // reîncarcă orele ocupate (actualizare instant)
       fetch(
-        `http://localhost/barbershop/backend/api/get_booked_times.php?barber_id=${barber_id}&date=${date}`
+        baseUrl + `/get_booked_times.php?barber_id=${barber_id}&date=${date}`
       )
         .then((r) => r.json())
         .then((d) => setBookedTimes((d || []).map((x) => x.substring(0, 5))));

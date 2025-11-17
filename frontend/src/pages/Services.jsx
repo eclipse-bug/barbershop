@@ -4,9 +4,10 @@ import { Scissors, Clock, BadgeDollarSign } from "lucide-react";
 
 export default function Services() {
   const [services, setServices] = useState([]);
+  const baseUrl = process.env.REACT_APP_BASE_URL;
 
   useEffect(() => {
-    fetch("http://localhost/barbershop/backend/api/get_services.php")
+    fetch(baseUrl + "/get_services.php")
       .then((res) => res.json())
       .then((data) => setServices(data))
       .catch((err) => console.error("Eroare API:", err));

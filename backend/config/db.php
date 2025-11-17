@@ -1,5 +1,5 @@
 <?php
-$host = "localhost";
+$host = getenv('DB_HOST') ?: "mysql";
 $user = "root";
 $pass = "";
 $db   = "barbershop";

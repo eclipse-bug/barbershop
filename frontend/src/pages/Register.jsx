@@ -24,8 +24,9 @@ export default function Register() {
     formData.append("telefon", telefon);
 
     try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
       const res = await fetch(
-        "http://localhost/barbershop/frontend/backend/api/register_client.php",
+        baseUrl + "/register_client.php",
         {
           method: "POST",
           body: formData,

@@ -25,8 +25,9 @@ export default function Dashboard() {
   const fetchAppointments = async (barberId) => {
     if (!barberId) return setAppointments([]);
     try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
       const res = await fetch(
-        `http://localhost/barbershop/backend/api/get_barber_appointments.php?barber_id=${encodeURIComponent(
+        baseUrl + `/get_barber_appointments.php?barber_id=${encodeURIComponent(
           barberId
         )}`,
         { cache: "no-store" }
@@ -48,8 +49,9 @@ export default function Dashboard() {
   const fetchHolidays = async (barberId) => {
     if (!barberId) return setHolidays([]);
     try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
       const res = await fetch(
-        `http://localhost/barbershop/backend/api/get_holidays.php?barber_id=${encodeURIComponent(
+        baseUrl + `/get_holidays.php?barber_id=${encodeURIComponent(
           barberId
         )}`,
         { cache: "no-store" }
@@ -71,7 +73,7 @@ export default function Dashboard() {
   useEffect(() => {
     const raw =
       localStorage.getItem("loggedUser") || sessionStorage.getItem("loggedUser");
-    let stored = null;
+    let stored;
     try {
       stored = raw ? JSON.parse(raw) : null;
     } catch {
@@ -108,8 +110,9 @@ export default function Dashboard() {
     const dateStr = `${year}-${month}-${day}`;
 
     try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
       const res = await fetch(
-        "http://localhost/barbershop/backend/api/set_holiday.php",
+        baseUrl + "/set_holiday.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -134,8 +137,9 @@ export default function Dashboard() {
     if (!activeBarberId) return setMessage("⚠ Barber inexistent pentru ștergere!");
     if (!window.confirm("Ștergi această zi liberă?")) return;
     try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
       const res = await fetch(
-        "http://localhost/barbershop/backend/api/delete_holiday.php",
+        baseUrl + "/delete_holiday.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -162,8 +166,9 @@ export default function Dashboard() {
 
   const handleSave = async (id) => {
     try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
       const res = await fetch(
-        "http://localhost/barbershop/backend/api/update_appointment.php",
+        baseUrl + "/update_appointment.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -187,8 +192,9 @@ export default function Dashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm("Ești sigur că vrei să ștergi această programare?")) return;
     try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
       const res = await fetch(
-        "http://localhost/barbershop/backend/api/delete_appointment.php",
+        baseUrl + "/delete_appointment.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
