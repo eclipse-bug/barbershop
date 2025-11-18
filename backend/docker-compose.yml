@@ -26,7 +26,7 @@ services:
     container_name: barbershop_php
     restart: unless-stopped
     ports:
-      - "9999:80"
+      - "8888:80"
     volumes:
       - ./:/var/www/html
     depends_on:
