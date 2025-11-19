@@ -1,34 +1,25 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=UTF-8");
+header("Content-Type: application/json");
 
-// ✅ Include conexiunea la baza de date (PDO)
-require_once "../config/db.php"; // ajustează calea dacă fișierul e în alt folder
+require_once "../config/db.php";
 
-// ✅ Citim datele primite din React
-$data = json_decode(file_get_contents("php://input"), true);
+$input = json_decode(file_get_contents("php://input"), true);
+$id = $input["id"] ?? null;
 
-// ✅ Verificăm dacă avem ID
-if (!isset($data["id"])) {
-  echo json_encode(["success" => false, "error" => "Lipsește ID-ul programării."]);
-  exit;
+if (!$id) {
+    echo json_encode(["success" => false, "message" => "ID lipsă."]);
+    exit;
 }
 
-$id = intval($data["id"]);
-
 try {
-  // ✅ Pregătim și executăm ștergerea
-  $stmt = $conn->prepare("DELETE FROM appointments WHERE id = ?");
-  $stmt->execute([$id]);
+    $stmt = $conn->prepare("DELETE FROM appointments WHERE id = :id");
+    $stmt->execute([":id" => $id]);
 
-  // ✅ Verificăm dacă s-a șters ceva efectiv
-  if ($stmt->rowCount() > 0) {
-    echo json_encode(["success" => true, "deleted_id" => $id]);
-  } else {
-    echo json_encode(["success" => false, "error" => "Programarea nu a fost găsită."]);
-  }
-} catch (Exception $e) {
-  echo json_encode(["success" => false, "error" => $e->getMessage()]);
+    echo json_encode(["success" => true]);
+
+} catch (PDOException $e) {
+    echo json_encode(["success" => false, "message" => "Eroare la ștergere."]);
 }

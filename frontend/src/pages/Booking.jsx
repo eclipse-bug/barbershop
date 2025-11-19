@@ -14,15 +14,21 @@ export default function Booking() {
     date: "",
     time: "",
   });
+
   const [user, setUser] = useState(null);
   const [barbers, setBarbers] = useState([]);
   const [bookedTimes, setBookedTimes] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [message, setMessage] = useState("");
+  const [selectedBarber, setSelectedBarber] = useState(null); // 🔥 ADĂUGAT
 
   const SLOT_MIN = 35;
+  const baseUrl = process.env.REACT_APP_BASE_URL;
 
+  // 🟡 pauza dintre 13:00–14:00
   const inBreak = (t) => t >= "13:00" && t < "14:00";
+
+  // 🟡 funcție pentru +X minute
   const addMinutes = (t, m) => {
     const [h, min] = t.split(":").map(Number);
     const total = h * 60 + min + m;
@@ -31,6 +37,7 @@ export default function Booking() {
     return `${H}:${M}`;
   };
 
+  // 🟡 generăm intervalele orare
   const generateTimes = (name = "") => {
     const list = [];
     let start = 8 * 60;
@@ -46,9 +53,23 @@ export default function Booking() {
   };
 
   const [availableTimes, setAvailableTimes] = useState(generateTimes());
-  const baseUrl = process.env.REACT_APP_BASE_URL;
 
-  // user logat
+  // 🔥🔥🔥 PRESELECTARE FRIZER DIN LOCALSTORAGE
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("selectedBarber");
+      if (stored) {
+        const barber = JSON.parse(stored);
+        setSelectedBarber(barber);
+        setForm((prev) => ({
+          ...prev,
+          barber_id: barber.id, // 🔥 setăm automat frizerul
+        }));
+      }
+    } catch {}
+  }, []);
+
+  // 🔥 user logat
   useEffect(() => {
     const stored =
       JSON.parse(localStorage.getItem("loggedUser")) ||
@@ -56,7 +77,7 @@ export default function Booking() {
     setUser(stored);
   }, []);
 
-  // lista frizerilor
+  // 🔥 lista frizerilor
   useEffect(() => {
     fetch(baseUrl + "/get_barbers.php")
       .then((r) => r.json())
@@ -64,13 +85,13 @@ export default function Booking() {
       .catch(() => setBarbers([]));
   }, []);
 
-  // adaptăm orele după frizer
+  // 🔥 adaptăm intervalele pe frizer
   useEffect(() => {
     const barber = barbers.find((b) => String(b.id) === String(form.barber_id));
     if (barber) setAvailableTimes(generateTimes(barber.nume || ""));
   }, [form.barber_id, barbers]);
 
-  // zile libere
+  // 🔥 zile libere
   useEffect(() => {
     if (!form.barber_id) return;
     fetch(baseUrl + `/get_holidays.php?barber_id=${form.barber_id}`)
@@ -82,11 +103,12 @@ export default function Booking() {
       .catch(() => setHolidays([]));
   }, [form.barber_id]);
 
-  // ore rezervate
+  // 🔥 ore ocupate
   useEffect(() => {
     if (!form.barber_id || !form.date) return;
     fetch(
-      baseUrl + `/get_booked_times.php?barber_id=${form.barber_id}&date=${form.date}`
+      baseUrl +
+        `/get_booked_times.php?barber_id=${form.barber_id}&date=${form.date}`
     )
       .then((r) => r.json())
       .then((d) => setBookedTimes((d || []).map((x) => x.substring(0, 5))))
@@ -109,6 +131,7 @@ export default function Booking() {
     if (bookedTimes.includes(t) || inBreak(t)) return false;
     const barber = barbers.find((b) => String(b.id) === String(form.barber_id));
     const interval = barber?.nume?.toLowerCase().includes("denis") ? 40 : SLOT_MIN;
+
     if (form.service === "Tuns + Barbă") {
       const next = addMinutes(t, interval);
       if (bookedTimes.includes(next)) return false;
@@ -116,12 +139,13 @@ export default function Booking() {
     return true;
   };
 
-  // ⬇️ trimite și următorul interval la backend
+  // 🔥 trimiterea formularului
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isHoliday) return setMessage("Frizerul este în concediu în această zi.");
 
     const { nume, telefon, service, barber_id, date, time } = form;
+
     if (!barber_id || !service || !date || !time)
       return setMessage("⚠ Completează toate câmpurile!");
 
@@ -136,31 +160,21 @@ export default function Booking() {
     fd.append("time", time);
     fd.append("barber_id", barber_id);
 
-    // 🟡 dacă e Tuns + Barbă -> trimitem și ora următoare
-    const barber = barbers.find((b) => String(b.id) === String(form.barber_id));
+    const barber = barbers.find((b) => String(b.id) === String(barber_id));
     const interval = barber?.nume?.toLowerCase().includes("denis") ? 40 : SLOT_MIN;
+
     if (service === "Tuns + Barbă") {
       const next = addMinutes(time, interval);
       fd.append("extra_time", next);
     }
 
-    const res = await fetch(
-      baseUrl + "/book_appointment.php",
-      { method: "POST", body: fd }
-    );
+    const res = await fetch(baseUrl + "/book_appointment.php", {
+      method: "POST",
+      body: fd,
+    });
 
     const data = await res.json();
     setMessage(data.success ? data.message : data.error || "Eroare necunoscută");
-
-    if (data.success) {
-      // reîncarcă orele ocupate (actualizare instant)
-      fetch(
-        baseUrl + `/get_booked_times.php?barber_id=${barber_id}&date=${date}`
-      )
-        .then((r) => r.json())
-        .then((d) => setBookedTimes((d || []).map((x) => x.substring(0, 5))));
-      setForm({ nume: "", telefon: "", service: "", barber_id: "", date: "", time: "" });
-    }
   };
 
   return (
@@ -176,26 +190,31 @@ export default function Booking() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+
+        
+
+          {/* 🔥 NUME & TELEFON DACĂ NU E LOGAT */}
           {!user && (
             <>
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Nume complet</label>
+                <label className="block text-sm text-gray-300 mb-1">Nume</label>
                 <input
                   type="text"
                   value={form.nume}
                   onChange={(e) => setForm({ ...form, nume: e.target.value })}
-                  placeholder="Ex: Ion Popescu"
+                  placeholder="Ex: Dumitru"
                   className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37]"
                   required
                 />
               </div>
+
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Număr de telefon</label>
+                <label className="block text-sm text-gray-300 mb-1">Telefon</label>
                 <input
                   type="tel"
                   value={form.telefon}
                   onChange={(e) => setForm({ ...form, telefon: e.target.value })}
-                  placeholder="+37360000000"
+                  placeholder="060000000"
                   className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37]"
                   required
                 />
@@ -203,11 +222,13 @@ export default function Booking() {
             </>
           )}
 
+
+          {/* 🔥 SERVICIU */}
           <select
             name="service"
             value={form.service}
             onChange={(e) => setForm({ ...form, service: e.target.value })}
-            className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37]"
+            className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37] appearance-none"
             required
           >
             <option value="">Selectează serviciul</option>
@@ -215,13 +236,14 @@ export default function Booking() {
             <option value="Tuns + Barbă">Tuns + Barbă</option>
             <option value="Barbă">Barbă</option>
           </select>
-
+          
+           {/* 🔥 SELECTARE FRIZER - CU PRESELECTARE */}
           <div className="relative flex items-center">
             <select
               name="barber_id"
               value={form.barber_id}
               onChange={(e) => setForm({ ...form, barber_id: e.target.value })}
-              className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37]"
+              className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-gray-200 focus:border-[#d4af37] appearance-none"
               required
             >
               <option value="">Selectează frizerul</option>
@@ -234,6 +256,7 @@ export default function Booking() {
             <Scissors className="absolute right-4 top-1/2 -translate-y-1/2 text-[#d4af37] w-5 h-5 pointer-events-none" />
           </div>
 
+          {/* 🔥 DATA + ORA */}
           <div className="flex gap-3">
             <div className="relative flex-1">
               <DatePicker
@@ -244,7 +267,7 @@ export default function Booking() {
                 minDate={new Date()}
                 placeholderText="Alege data"
                 calendarStartDay={1}
-                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-[#d4af37] placeholder-gray-400 focus:border-[#d4af37]"
+                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-[#d4af37] appearance-none"
               />
               <CalendarDays className="absolute right-4 top-1/2 -translate-y-1/2 text-[#d4af37] w-5 h-5" />
             </div>
@@ -255,7 +278,7 @@ export default function Booking() {
                 value={form.time}
                 onChange={(e) => handleTimeChange(e.target.value)}
                 disabled={isHoliday}
-                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-white disabled:text-gray-500 focus:border-[#d4af37]"
+                className="w-full bg-[#1a1a1a] border border-[#d4af37]/40 rounded-md px-4 py-2 text-white disabled:text-gray-500 appearance-none"
                 required
               >
                 <option value="">Ora...</option>
@@ -276,10 +299,11 @@ export default function Booking() {
 
           {isHoliday && (
             <p className="text-red-400 text-sm text-center">
-              Frizerul este în concediu în această zi. Alege altă dată.
+              Frizerul este în concediu în această zi.
             </p>
           )}
 
+          {/* 🔥 BUTON */}
           <button
             type="submit"
             disabled={isHoliday}
@@ -293,6 +317,7 @@ export default function Booking() {
           </button>
         </form>
 
+        {/* 🔥 MESAJ */}
         {message && (
           <p
             className={`mt-4 text-center text-sm ${

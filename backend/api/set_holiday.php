@@ -1,67 +1,30 @@
 <?php
-// ---------------------------
-// HEADERS
-// ---------------------------
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-  http_response_code(200);
-  exit;
-}
 
-// ---------------------------
-// CONEXIUNE LA BD
-// ---------------------------
-$root = dirname(__DIR__); // urcă un nivel (din /api în /backend)
 require_once "../config/db.php";
 
-// ---------------------------
-// CITIREA DATELOR
-// ---------------------------
-$raw = file_get_contents("php://input");
-$data = json_decode($raw, true);
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Content-Type: application/json; charset=UTF-8");
 
-if (json_last_error() !== JSON_ERROR_NONE) {
-  echo json_encode(["success" => false, "error" => "Invalid JSON body"]);
-  exit;
-}
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") exit;
 
-$barber_id = $data["barber_id"] ?? null;
-$date = $data["date"] ?? null;
+$data = json_decode(file_get_contents("php://input"), true);
+$barber_id = intval($data["barber_id"] ?? 0);
+$date = $data["date"] ?? "";
 
-if (!$barber_id || !$date) {
-  echo json_encode(["success" => false, "error" => "Missing barber_id or date"]);
-  exit;
-}
+$stmt = $conn->prepare("INSERT INTO holidays (barber_id, date) VALUES (:id, :date)");
+$stmt->bindValue(":id", $barber_id);
+$stmt->bindValue(":date", $date);
 
-// ---------------------------
-// CREARE TABEL DACĂ NU EXISTĂ
-// ---------------------------
 try {
-  $conn->exec("CREATE TABLE IF NOT EXISTS holidays (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    barber_id INT NOT NULL,
-    date DATE NOT NULL,
-    UNIQUE KEY unique_barber_date (barber_id, date)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-} catch (PDOException $e) {
-  echo json_encode(["success" => false, "error" => "Table creation failed: " . $e->getMessage()]);
-  exit;
-}
-
-// ---------------------------
-// INSERARE ZI LIBERĂ
-// ---------------------------
-try {
-  $stmt = $conn->prepare("INSERT IGNORE INTO holidays (barber_id, date) VALUES (:barber_id, :date)");
-  $stmt->bindParam(":barber_id", $barber_id, PDO::PARAM_INT);
-  $stmt->bindParam(":date", $date);
-  $stmt->execute();
-
-  echo json_encode(["success" => true, "date" => $date]);
-} catch (PDOException $e) {
-  echo json_encode(["success" => false, "error" => $e->getMessage()]);
+    $stmt->execute();
+    echo json_encode(["success" => true]);
+} catch (Exception $e) {
+    echo json_encode(["success" => false, "message" => "Există deja această zi liberă."]);
 }

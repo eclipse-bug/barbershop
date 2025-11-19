@@ -46,11 +46,11 @@ export default function App() {
       <div
         className="relative min-h-screen text-white"
         style={{
-          backgroundImage: `url(${bgImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundAttachment: "fixed",
-        }}
+  backgroundImage: `url(${bgImage})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+}}
+
       >
         <div className="absolute inset-0 bg-black/70 backdrop-blur-[3px]"></div>
 

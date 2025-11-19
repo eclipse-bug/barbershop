@@ -64,16 +64,16 @@ try {
 
     // ✅ Inserăm prima oră
     $stmt = $conn->prepare("
-        INSERT INTO appointments (client_id, nume, telefon, service, date, time, barber_id)
-        VALUES (NULL, ?, ?, ?, ?, ?, ?)
+        INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
+        VALUES ( ?, ?, ?, ?, ?, ?)
     ");
     $stmt->execute([$nume, $telefon, $service, $date, $time, $barber_id]);
 
     // ✅ Dacă e Tuns + Barbă, inserăm și următoarea oră
     if (!empty($extra_time)) {
         $stmt2 = $conn->prepare("
-            INSERT INTO appointments (client_id, nume, telefon, service, date, time, barber_id)
-            VALUES (NULL, ?, ?, ?, ?, ?, ?)
+            INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
+            VALUES ( ?, ?, ?, ?, ?, ?)
         ");
         $stmt2->execute([$nume, $telefon, $service, $date, $extra_time, $barber_id]);
     }

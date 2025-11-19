@@ -22,52 +22,64 @@ export default function Dashboard() {
   const activeBarberId = forcedBarberId || user?.id || null;
 
   // --- Obținerea programărilor ---
-  const fetchAppointments = async (barberId) => {
-    if (!barberId) return setAppointments([]);
-    try {
-      const baseUrl = process.env.REACT_APP_BASE_URL;
-      const res = await fetch(
-        baseUrl + `/get_barber_appointments.php?barber_id=${encodeURIComponent(
-          barberId
-        )}`,
-        { cache: "no-store" }
+ const fetchAppointments = async (barberId) => {
+  if (!barberId) return setAppointments([]);
+
+  try {
+    const baseUrl = process.env.REACT_APP_BASE_URL;
+    const res = await fetch(baseUrl + "/get_barber_appointments.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ barber_id: barberId }),
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+
+    if (data?.success && Array.isArray(data.appointments)) {
+      const sorted = data.appointments.sort(
+        (a, b) =>
+          new Date(`${a.date}T${a.time}`) -
+          new Date(`${b.date}T${b.time}`)
       );
-      const data = await res.json();
-      if (data?.success && Array.isArray(data.appointments)) {
-        const sorted = data.appointments.sort(
-          (a, b) =>
-            new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`)
-        );
-        setAppointments(sorted);
-      } else setAppointments([]);
-    } catch {
+      setAppointments(sorted);
+    } else {
       setAppointments([]);
     }
-  };
+  } catch {
+    setAppointments([]);
+  }
+};
+
 
   // --- Obținerea zilelor libere ---
-  const fetchHolidays = async (barberId) => {
-    if (!barberId) return setHolidays([]);
-    try {
-      const baseUrl = process.env.REACT_APP_BASE_URL;
-      const res = await fetch(
-        baseUrl + `/get_holidays.php?barber_id=${encodeURIComponent(
-          barberId
-        )}`,
-        { cache: "no-store" }
+ const fetchHolidays = async (barberId) => {
+  if (!barberId) return setHolidays([]);
+
+  try {
+    const baseUrl = process.env.REACT_APP_BASE_URL;
+    const res = await fetch(baseUrl + "/get_holidays.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ barber_id: barberId }),
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+
+    if (data?.success) {
+      setHolidays(
+        data.holidays
+          .map((h) => (typeof h === "string" ? h : h?.date || null))
+          .filter(Boolean)
       );
-      const data = await res.json();
-      if (data?.success)
-        setHolidays(
-          data.holidays
-            .map((h) => (typeof h === "string" ? h : h?.date || null))
-            .filter(Boolean)
-        );
-      else setHolidays([]);
-    } catch {
+    } else {
       setHolidays([]);
     }
-  };
+  } catch {
+    setHolidays([]);
+  }
+};
 
   // --- Inițializare utilizator ---
   useEffect(() => {
@@ -336,7 +348,7 @@ export default function Dashboard() {
         </div>
 
         {/* 📅 Lista programărilor */}
-        {filteredAppointments.length === 0 ? (
+        {filteredAppointments.length === 0 ? (  
           <p className="text-center text-gray-400 text-sm md:text-base mb-10">
             Nu s-au găsit programări pentru filtrul selectat.
           </p>

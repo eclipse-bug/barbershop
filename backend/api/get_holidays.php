@@ -1,22 +1,48 @@
 <?php
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 
-$root = dirname(__DIR__);
 require_once "../config/db.php";
-$barber_id = $_GET["barber_id"] ?? null;
 
-if (!$barber_id) {
-  echo json_encode(["success" => false, "error" => "Missing barber_id"]);
-  exit;
+// răspuns instant la preflight OPTIONS
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+    http_response_code(200);
+    exit;
+}
+
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+    echo json_encode(["success" => false, "message" => "POST obligatoriu."]);
+    exit;
+}
+
+$input = json_decode(file_get_contents("php://input"), true);
+$barber_id = $input["barber_id"] ?? null;
+
+if (!$barber_id || !is_numeric($barber_id)) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => "barber_id invalid."]);
+    exit;
 }
 
 try {
-  $stmt = $conn->prepare("SELECT date FROM holidays WHERE barber_id = :barber_id ORDER BY date ASC");
-  $stmt->bindParam(":barber_id", $barber_id, PDO::PARAM_INT);
-  $stmt->execute();
-  $holidays = $stmt->fetchAll(PDO::FETCH_ASSOC);
-  echo json_encode(["success" => true, "holidays" => $holidays]);
+    $stmt = $conn->prepare("
+        SELECT date 
+        FROM holidays 
+        WHERE barber_id = :barber_id 
+        ORDER BY date ASC
+    ");
+    $stmt->bindValue(":barber_id", $barber_id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $holidays = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode(["success" => true, "holidays" => $holidays]);
+
 } catch (PDOException $e) {
-  echo json_encode(["success" => false, "error" => $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode(["success" => false, "message" => "Eroare server."]);
 }

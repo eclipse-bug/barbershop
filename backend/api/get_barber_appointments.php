@@ -1,41 +1,48 @@
 <?php
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 
 require_once "../config/db.php";
 
-$barber_id = $_GET["barber_id"] ?? null;
+// răspuns instant la OPTIONS (preflight)
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+    http_response_code(200);
+    exit;
+}
 
-if (!$barber_id) {
-    echo json_encode(["success" => false, "error" => "Lipsește barber_id"]);
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+    echo json_encode(["success" => false, "message" => "Doar POST este permis."]);
+    exit;
+}
+
+$input = json_decode(file_get_contents("php://input"), true);
+$barber_id = $input["barber_id"] ?? null;
+
+if (!$barber_id || !is_numeric($barber_id)) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => "barber_id invalid."]);
     exit;
 }
 
 try {
-    // 🔹 Fiecare frizer vede doar programările sale
     $stmt = $conn->prepare("
-        SELECT 
-            a.id,
-            a.nume AS client_nume,
-            a.telefon AS client_telefon,
-            a.service,
-            a.date,
-            a.time,
-            a.created_at,
-            b.nume AS barber_name
-        FROM appointments a
-        LEFT JOIN barbers b ON a.barber_id = b.id
-        WHERE a.barber_id = ?
-        ORDER BY a.date ASC, a.time ASC
+        SELECT id, client_nume, client_prenume, client_telefon, service, date, time 
+        FROM appointments
+        WHERE barber_id = :barber_id
+        ORDER BY date ASC, time ASC
     ");
-    $stmt->execute([$barber_id]);
+    $stmt->bindValue(":barber_id", $barber_id, PDO::PARAM_INT);
+    $stmt->execute();
+
     $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo json_encode([
-        "success" => true,
-        "appointments" => $appointments
-    ]);
+    echo json_encode(["success" => true, "appointments" => $appointments]);
+
 } catch (PDOException $e) {
-    echo json_encode(["success" => false, "error" => $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode(["success" => false, "message" => "Eroare server."]);
 }
-?>
