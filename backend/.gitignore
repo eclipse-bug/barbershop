@@ -1,0 +1,20 @@
+# Environment variables
+# Note: .env is tracked in git for this project
+
+# Uploads directory (user-generated content)
+uploads/*
+!uploads/.gitkeep
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
