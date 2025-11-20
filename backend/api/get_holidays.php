@@ -1,6 +1,6 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -13,14 +13,13 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     exit;
 }
 
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
     http_response_code(405);
-    echo json_encode(["success" => false, "message" => "POST obligatoriu."]);
+    echo json_encode(["success" => false, "message" => "GET obligatoriu."]);
     exit;
 }
 
-$input = json_decode(file_get_contents("php://input"), true);
-$barber_id = $input["barber_id"] ?? null;
+$barber_id = $_GET["barber_id"] ?? null;
 
 if (!$barber_id || !is_numeric($barber_id)) {
     http_response_code(400);
