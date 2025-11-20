@@ -21,7 +21,7 @@ const server = http.createServer((req, res) => {
             res.end('Backend webhook received');
 
             // Run git pull and docker rebuild in background
-            exec(`cd ${REPO_PATH_FRONT} && git pull origin main && pm2 restart 0`, (error, stdout, stderr) => {
+            exec(`cd ${REPO_PATH_FRONT} && git pull && pm2 restart 0`, (error, stdout, stderr) => {
                 if (error) {
                     console.error('Error:', error);
                     return;
@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
             });
 
             // Run git pull and docker rebuild in background
-            exec(`cd ${REPO_PATH_BACK} && git pull origin main && docker compose build && docker compose up -d`, (error, stdout, stderr) => {
+            exec(`cd ${REPO_PATH_BACK} && git pull && docker compose build && docker compose up -d`, (error, stdout, stderr) => {
                 if (error) {
                     console.error('Error:', error);
                     return;
