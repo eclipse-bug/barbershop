@@ -1,18 +1,18 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 
 require_once "../config/db.php";
 
-// 🔒 acceptăm DOAR POST
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+// 🔒 acceptăm DOAR GET
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
     http_response_code(405); // method not allowed
     echo json_encode([
         "success" => false,
-        "message" => "Metoda permisă este POST."
+        "message" => "Metoda permisă este GET."
     ]);
     exit;
 }
