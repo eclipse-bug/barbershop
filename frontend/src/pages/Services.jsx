@@ -9,9 +9,19 @@ export default function Services() {
   useEffect(() => {
     fetch(baseUrl + "/get_services.php")
       .then((res) => res.json())
-      .then((data) => setServices(data))
-      .catch((err) => console.error("Eroare API:", err));
-  }, []);
+      .then((data) => {
+        if (data.success && Array.isArray(data.services)) {
+          setServices(data.services);
+        } else {
+          console.error("Invalid API response:", data);
+          setServices([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Eroare API:", err);
+        setServices([]);
+      });
+  }, [baseUrl]);
 
   return (
     <section className="min-h-screen px-6 py-16 flex flex-col items-center text-white relative">
