@@ -15,7 +15,7 @@ export default function Home() {
           className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#d4af37] 
           mb-4 sm:mb-6 leading-tight drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] px-2"
         >
-          Barbershop de clasă<br className="sm:hidden" /> pentru Gentlemen adevărati
+          Barbershop de clasă<br className="sm:hidden" /> pentru Gentlemen adevărați
         </h1>
 
         <p
