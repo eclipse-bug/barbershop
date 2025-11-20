@@ -58,10 +58,9 @@ export default function Dashboard() {
 
   try {
     const baseUrl = process.env.REACT_APP_BASE_URL;
-    const res = await fetch(baseUrl + "/get_holidays.php", {
+    const res = await fetch(baseUrl + `/get_holidays.php?barber_id=${barberId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ barber_id: barberId }),
       cache: "no-store",
     });
 
