@@ -26,7 +26,7 @@ $barber_id   = $_POST["barber_id"] ?? null;
 $extra_time  = trim($_POST["extra_time"] ?? ""); // 🟡 adăugat pentru Tuns + Barbă
 
 // 🔒 Validare minimă
-if (!$client_nume || !$client_telefon || !$service || !$date || !$time || !$barber_id) {
+if (!$nume || !$telefon || !$service || !$date || !$time || !$barber_id) {
     echo json_encode(["error" => "Completează toate câmpurile!"]);
     exit;
 }
