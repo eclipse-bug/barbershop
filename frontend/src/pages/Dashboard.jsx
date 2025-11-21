@@ -251,7 +251,51 @@ export default function Dashboard() {
             )}
           </div>
 
-
+          {/* 🔍 Căutare + Filtru Dată */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mb-8 w-full">
+            <input
+              type="text"
+              placeholder="Caută client, serviciu sau telefon..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:flex-1 sm:max-w-md bg-[#1a1a1a] border border-[#d4af37]/40 text-white placeholder-gray-400 rounded-lg px-4 py-2.5 text-sm md:text-base focus:border-[#d4af37] focus:outline-none"
+            />
+            <div className="relative w-full sm:w-auto">
+              <DatePicker
+                selected={filterDate}
+                onChange={(date) => setFilterDate(date)}
+                locale="ro"
+                dateFormat="dd.MM.yyyy"
+                placeholderText="Alege data..."
+                customInput={
+                  <button
+                    type="button"
+                    className="w-full sm:w-auto sm:min-w-[200px] md:min-w-[240px] flex items-center justify-center gap-2 px-4 md:px-5 py-2.5 rounded-lg font-semibold text-sm md:text-base transition-all duration-300 shadow-md bg-[#d4af37] text-black border-2 border-[#d4af37] hover:bg-[#d4af37]/90"
+                  >
+                    <CalendarDays className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="font-semibold">
+                      {filterDate
+                        ? `${filterDate.getDate().toString().padStart(2, "0")}.${(filterDate.getMonth() + 1).toString().padStart(2, "0")}.${filterDate.getFullYear()}`
+                        : "Filtrează după dată"}
+                    </span>
+                  </button>
+                }
+                popperPlacement="bottom"
+              />
+              {filterDate && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFilterDate(null);
+                  }}
+                  className="absolute -right-2 -top-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-red-600 transition shadow-lg z-10"
+                  title="Șterge filtrul"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
 
           {/* 📅 Lista programărilor */}
           {filteredAppointments.length === 0 ? (
