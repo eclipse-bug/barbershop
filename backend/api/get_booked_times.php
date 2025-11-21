@@ -1,13 +1,13 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
 require_once "../config/db.php";
 
-// acceptăm doar POST
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+// acceptăm doar GET
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
     echo json_encode(["error" => "Invalid method"]);
     exit;
 }
