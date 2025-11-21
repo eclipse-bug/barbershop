@@ -1,77 +1,83 @@
--- =====================================================
--- BARBERSHOP DATABASE TABLES
--- =====================================================
+create table admins
+(
+    id        int auto_increment
+        primary key,
+    nume      varchar(100) not null,
+    prenume   varchar(100) not null,
+    telefon   varchar(20)  not null,
+    cod_acces varchar(255) not null comment 'Hashed password using password_hash()',
+    constraint telefon
+        unique (telefon)
+);
 
--- Table: services
--- Used by: get_services.php
-CREATE TABLE IF NOT EXISTS services (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    duration INT NOT NULL COMMENT 'Duration in minutes'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table barbers
+(
+    id           int auto_increment
+        primary key,
+    nume         varchar(100) not null,
+    specializare varchar(255) null,
+    imagine      varchar(255) null
+);
 
--- Table: barbers
--- Used by: get_barbers.php, get_holidays.php, set_holiday.php, delete_holiday.php
-CREATE TABLE IF NOT EXISTS barbers (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nume VARCHAR(100) NOT NULL,
-    specializare VARCHAR(255) DEFAULT NULL,
-    imagine VARCHAR(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table appointments
+(
+    id             int auto_increment
+        primary key,
+    nume           varchar(100)                        null,
+    telefon        varchar(20)                         null,
+    service        varchar(100)                        not null,
+    date           date                                not null,
+    time           time                                not null,
+    barber_id      int                                 not null,
+    created_at     timestamp default CURRENT_TIMESTAMP null,
+    client_nume    varchar(100)                        null,
+    client_prenume varchar(100)                        null,
+    client_telefon varchar(20)                         null,
+    constraint appointments_ibfk_1
+        foreign key (barber_id) references barbers (id)
+            on delete cascade
+);
 
--- Table: admins
--- Used by: admin_login.php
-CREATE TABLE IF NOT EXISTS admins (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nume VARCHAR(100) NOT NULL,
-    prenume VARCHAR(100) NOT NULL,
-    telefon VARCHAR(20) NOT NULL UNIQUE,
-    cod_acces VARCHAR(255) NOT NULL COMMENT 'Hashed password using password_hash()'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create index barber_id
+    on appointments (barber_id);
 
--- Table: appointments
--- Used by: book_appointment.php, get_booked_times.php, update_appointment.php,
---          delete_appointment.php, delete_old_appointments.php, get_barber_appointments.php
-CREATE TABLE IF NOT EXISTS appointments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nume VARCHAR(100) NOT NULL,
-    telefon VARCHAR(20) NOT NULL,
-    client_nume VARCHAR(100) DEFAULT NULL,
-    client_prenume VARCHAR(100) DEFAULT NULL,
-    client_telefon VARCHAR(20) DEFAULT NULL,
-    service VARCHAR(100) NOT NULL,
-    date DATE NOT NULL,
-    time TIME NOT NULL,
-    barber_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table holidays
+(
+    id        int auto_increment
+        primary key,
+    barber_id int  not null,
+    date      date not null,
+    constraint unique_barber_date
+        unique (barber_id, date),
+    constraint holidays_ibfk_1
+        foreign key (barber_id) references barbers (id)
+            on delete cascade
+);
 
--- Table: simple_appointments
--- Used by: get_all_appointments.php
-CREATE TABLE IF NOT EXISTS simple_appointments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nume VARCHAR(100) NOT NULL,
-    telefon VARCHAR(20) NOT NULL,
-    service VARCHAR(100) NOT NULL,
-    date DATE NOT NULL,
-    time TIME NOT NULL,
-    barber_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table services
+(
+    id       int auto_increment
+        primary key,
+    name     varchar(100)   not null,
+    price    decimal(10, 2) not null,
+    duration int            not null comment 'Duration in minutes'
+);
 
--- Table: holidays
--- Used by: get_holidays.php, set_holiday.php, delete_holiday.php
-CREATE TABLE IF NOT EXISTS holidays (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    barber_id INT NOT NULL,
-    date DATE NOT NULL,
-    UNIQUE KEY unique_barber_date (barber_id, date),
-    FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table simple_appointments
+(
+    id         int auto_increment
+        primary key,
+    nume       varchar(100)                        not null,
+    telefon    varchar(20)                         not null,
+    service    varchar(100)                        not null,
+    date       date                                not null,
+    time       time                                not null,
+    barber_id  int                                 not null,
+    created_at timestamp default CURRENT_TIMESTAMP null,
+    constraint simple_appointments_ibfk_1
+        foreign key (barber_id) references barbers (id)
+            on delete cascade
+);
 
--- Update appointments table to include duration
-ALTER TABLE `appointments` 
-ADD COLUMN `duration` INT NOT NULL DEFAULT 35 COMMENT 'Duration in minutes' AFTER `time`;
+create index barber_id
+    on simple_appointments (barber_id);

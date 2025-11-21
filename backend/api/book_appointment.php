@@ -31,6 +31,11 @@ if (!$nume || !$telefon || !$service || !$date || !$time || !$barber_id) {
     exit;
 }
 
+// 🔧 Split nume into prenume and nume for client_* columns
+$name_parts = explode(" ", $nume, 2);
+$client_prenume = $name_parts[0] ?? "";
+$client_nume = $name_parts[1] ?? "";
+
 try {
     // ⚠️ Verificăm dacă ora principală este deja ocupată
     $stmt = $conn->prepare("
@@ -64,18 +69,18 @@ try {
 
     // ✅ Inserăm programarea cu durata corectă
     $stmt = $conn->prepare("
-        INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
-        VALUES ( ?, ?, ?, ?, ?, ?)
+        INSERT INTO appointments (client_prenume, client_nume, client_telefon, service, date, time, barber_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$nume, $telefon, $service, $date, $time, $barber_id]);
+    $stmt->execute([$client_prenume, $client_nume, $telefon, $service, $date, $time, $barber_id]);
 
     // ✅ Dacă e Tuns + Barbă, inserăm și următoarea oră
     if (!empty($extra_time)) {
         $stmt2 = $conn->prepare("
-            INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
-            VALUES ( ?, ?, ?, ?, ?, ?)
+            INSERT INTO appointments (client_prenume, client_nume, client_telefon, service, date, time, barber_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt2->execute([$nume, $telefon, $service, $date, $extra_time, $barber_id]);
+        $stmt2->execute([$client_prenume, $client_nume, $telefon, $service, $date, $extra_time, $barber_id]);
     }
 
     echo json_encode([
