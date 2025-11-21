@@ -17,16 +17,16 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 // 🧾 Preluăm datele din formular
-$nume        = trim($_POST["nume"] ?? "");
-$telefon     = trim($_POST["telefon"] ?? "");
-$service     = trim($_POST["service"] ?? "");
-$date        = trim($_POST["date"] ?? "");
-$time        = trim($_POST["time"] ?? "");
-$barber_id   = $_POST["barber_id"] ?? null;
-$extra_time  = trim($_POST["extra_time"] ?? ""); // 🟡 adăugat pentru Tuns + Barbă
+$client_nume     = trim($_POST["nume"] ?? "");
+$client_prenume  = trim($_POST["prenume"] ?? "");
+$client_telefon  = trim($_POST["telefon"] ?? "");
+$service         = trim($_POST["service"] ?? "");
+$date            = trim($_POST["date"] ?? "");
+$time            = trim($_POST["time"] ?? "");
+$barber_id       = $_POST["barber_id"] ?? null;
 
 // 🔒 Validare minimă
-if (!$nume || !$telefon || !$service || !$date || !$time || !$barber_id) {
+if (!$client_nume || !$client_telefon || !$service || !$date || !$time || !$barber_id) {
     echo json_encode(["error" => "Completează toate câmpurile!"]);
     exit;
 }
@@ -46,37 +46,28 @@ try {
         exit;
     }
 
-    // ⚠️ Verificăm și extra_time dacă e trimis
-    if (!empty($extra_time)) {
-        $stmt = $conn->prepare("
-            SELECT COUNT(*) 
-            FROM appointments 
-            WHERE barber_id = ? AND date = ? AND time = ?
-        ");
-        $stmt->execute([$barber_id, $date, $extra_time]);
-        $exists2 = $stmt->fetchColumn();
-
-        if ($exists2 > 0) {
-            echo json_encode(["error" => "Unul dintre intervale este deja ocupat!"]);
-            exit;
-        }
+    // 🔥 Determinăm durata în funcție de serviciu
+    $duration = 35; // implicit pentru Tuns sau Barbă
+    
+    // Verificăm dacă e Denis (interval de 40 minute)
+    $stmtBarber = $conn->prepare("SELECT nume FROM barbers WHERE id = ?");
+    $stmtBarber->execute([$barber_id]);
+    $barberData = $stmtBarber->fetch(PDO::FETCH_ASSOC);
+    
+    if ($barberData && stripos($barberData['nume'], 'denis') !== false) {
+        $duration = 40;
+    }
+    
+    if ($service === "Tuns + Barbă") {
+        $duration = $duration * 2; // dublăm durata
     }
 
-    // ✅ Inserăm prima oră
+    // ✅ Inserăm programarea cu durata corectă
     $stmt = $conn->prepare("
-        INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
-        VALUES ( ?, ?, ?, ?, ?, ?)
+        INSERT INTO appointments (nume, telefon, client_nume, client_prenume, client_telefon, service, date, time, barber_id, duration)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$nume, $telefon, $service, $date, $time, $barber_id]);
-
-    // ✅ Dacă e Tuns + Barbă, inserăm și următoarea oră
-    if (!empty($extra_time)) {
-        $stmt2 = $conn->prepare("
-            INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
-            VALUES ( ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt2->execute([$nume, $telefon, $service, $date, $extra_time, $barber_id]);
-    }
+    $stmt->execute([$client_nume, $client_telefon, $client_nume, $client_prenume, $client_telefon, $service, $date, $time, $barber_id, $duration]);
 
     echo json_encode([
         "success" => true,

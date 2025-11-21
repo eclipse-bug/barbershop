@@ -71,3 +71,7 @@ CREATE TABLE IF NOT EXISTS holidays (
     UNIQUE KEY unique_barber_date (barber_id, date),
     FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Update appointments table to include duration
+ALTER TABLE `appointments` 
+ADD COLUMN `duration` INT NOT NULL DEFAULT 35 COMMENT 'Duration in minutes' AFTER `time`;

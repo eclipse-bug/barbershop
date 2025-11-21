@@ -20,7 +20,7 @@ export default function Booking() {
     const [bookedTimes, setBookedTimes] = useState([]);
     const [holidays, setHolidays] = useState([]);
     const [message, setMessage] = useState("");
-    const [selectedBarber, setSelectedBarber] = useState(null); // 🔥 ADĂUGAT
+    const [selectedBarber, setSelectedBarber] = useState(null);
 
     const SLOT_MIN = 35;
     const baseUrl = process.env.REACT_APP_BASE_URL;
@@ -54,7 +54,7 @@ export default function Booking() {
 
     const [availableTimes, setAvailableTimes] = useState(generateTimes());
 
-    // 🔥🔥🔥 PRESELECTARE FRIZER DIN LOCALSTORAGE
+    // 🔥 PRESELECTARE FRIZER DIN LOCALSTORAGE
     useEffect(() => {
         try {
             const stored = localStorage.getItem("selectedBarber");
@@ -63,7 +63,7 @@ export default function Booking() {
                 setSelectedBarber(barber);
                 setForm((prev) => ({
                     ...prev,
-                    barber_id: barber.id, // 🔥 setăm automat frizerul
+                    barber_id: barber.id,
                 }));
             }
         } catch {
@@ -133,7 +133,8 @@ export default function Booking() {
         const barber = barbers.find((b) => String(b.id) === String(form.barber_id));
         const interval = barber?.nume?.toLowerCase().includes("denis") ? 40 : SLOT_MIN;
 
-        if (form.service === "Tuns + Barbă") {
+        // 🔥 CRITICAL FIX: Only check double booking for Danu (barber_id = 2) when service is "Tuns + Barbă"
+        if (form.service === "Tuns + Barbă" && String(form.barber_id) === "2") {
             const next = addMinutes(t, interval);
             if (bookedTimes.includes(next)) return false;
         }
@@ -164,7 +165,8 @@ export default function Booking() {
         const barber = barbers.find((b) => String(b.id) === String(barber_id));
         const interval = barber?.nume?.toLowerCase().includes("denis") ? 40 : SLOT_MIN;
 
-        if (service === "Tuns + Barbă") {
+        // 🔥 CRITICAL FIX: Only send extra_time for Danu (barber_id = 2) when service is "Tuns + Barbă"
+        if (service === "Tuns + Barbă" && String(barber_id) === "2") {
             const next = addMinutes(time, interval);
             fd.append("extra_time", next);
         }
@@ -191,8 +193,6 @@ export default function Booking() {
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-
-
                     {/* 🔥 NUME & TELEFON DACĂ NU E LOGAT */}
                     {!user && (
                         <>
@@ -221,7 +221,6 @@ export default function Booking() {
                             </div>
                         </>
                     )}
-
 
                     {/* 🔥 SERVICIU */}
                     <select

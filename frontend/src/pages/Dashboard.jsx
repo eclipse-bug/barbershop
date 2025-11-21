@@ -22,65 +22,64 @@ export default function Dashboard() {
   const activeBarberId = forcedBarberId || user?.id || null;
 
   // --- Obținerea programărilor ---
- const fetchAppointments = async (barberId) => {
-  if (!barberId) return setAppointments([]);
+  const fetchAppointments = async (barberId) => {
+    if (!barberId) return setAppointments([]);
 
-  try {
-    const baseUrl = process.env.REACT_APP_BASE_URL;
-    const res = await fetch(baseUrl + "/get_barber_appointments.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ barber_id: barberId }),
-      cache: "no-store",
-    });
+    try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
+      const res = await fetch(baseUrl + "/get_barber_appointments.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barber_id: barberId }),
+        cache: "no-store",
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data?.success && Array.isArray(data.appointments)) {
-      const sorted = data.appointments.sort(
-        (a, b) =>
-          new Date(`${a.date}T${a.time}`) -
-          new Date(`${b.date}T${b.time}`)
-      );
-      setAppointments(sorted);
-    } else {
+      if (data?.success && Array.isArray(data.appointments)) {
+        const sorted = data.appointments.sort(
+          (a, b) =>
+            new Date(`${a.date}T${a.time}`) -
+            new Date(`${b.date}T${b.time}`)
+        );
+        setAppointments(sorted);
+      } else {
+        setAppointments([]);
+      }
+    } catch {
       setAppointments([]);
     }
-  } catch {
-    setAppointments([]);
-  }
-};
-
+  };
 
   // --- Obținerea zilelor libere ---
- const fetchHolidays = async (barberId) => {
-  if (!barberId) return setHolidays([]);
+  const fetchHolidays = async (barberId) => {
+    if (!barberId) return setHolidays([]);
 
-  try {
-    const baseUrl = process.env.REACT_APP_BASE_URL;
-    const res = await fetch(baseUrl + `/get_holidays.php?barber_id=${barberId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-    });
+    try {
+      const baseUrl = process.env.REACT_APP_BASE_URL;
+      const res = await fetch(baseUrl + `/get_holidays.php?barber_id=${barberId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data?.success) {
-      setHolidays(
-        data.holidays
-          .map((h) => (typeof h === "string" ? h : h?.date || null))
-          .filter(Boolean)
-      );
-    } else {
+      if (data?.success) {
+        setHolidays(
+          data.holidays
+            .map((h) => (typeof h === "string" ? h : h?.date || null))
+            .filter(Boolean)
+        );
+      } else {
+        setHolidays([]);
+      }
+    } catch {
       setHolidays([]);
     }
-  } catch {
-    setHolidays([]);
-  }
-};
+  };
 
-  // --- Inițializare utilizator ---
+  // --- Inițializare utilizator - UPDATED PHONE NUMBERS ---
   useEffect(() => {
     const raw =
       localStorage.getItem("loggedUser") || sessionStorage.getItem("loggedUser");
@@ -96,12 +95,13 @@ export default function Dashboard() {
     setUser(stored);
     const phoneNormalized = (stored.telefon || "").replace(/\D/g, "");
 
-    if (phoneNormalized === "060000000") {
-      setForcedBarberId(1);
+    // 🔧 UPDATED: New phone numbers for Denis and Danu
+    if (phoneNormalized === "069225738") {
+      setForcedBarberId(1); // Denis
       fetchAppointments(1);
       fetchHolidays(1);
-    } else if (phoneNormalized === "076784211") {
-      setForcedBarberId(2);
+    } else if (phoneNormalized === "060275874") {
+      setForcedBarberId(2); // Danu
       fetchAppointments(2);
       fetchHolidays(2);
     } else if (stored.id) {
@@ -122,14 +122,11 @@ export default function Dashboard() {
 
     try {
       const baseUrl = process.env.REACT_APP_BASE_URL;
-      const res = await fetch(
-        baseUrl + "/set_holiday.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ barber_id: activeBarberId, date: dateStr }),
-        }
-      );
+      const res = await fetch(baseUrl + "/set_holiday.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barber_id: activeBarberId, date: dateStr }),
+      });
       const data = await res.json();
       if (data.success) {
         setMessage("🌴 Ziua liberă a fost adăugată corect!");
@@ -149,14 +146,11 @@ export default function Dashboard() {
     if (!window.confirm("Ștergi această zi liberă?")) return;
     try {
       const baseUrl = process.env.REACT_APP_BASE_URL;
-      const res = await fetch(
-        baseUrl + "/delete_holiday.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ barber_id: activeBarberId, date }),
-        }
-      );
+      const res = await fetch(baseUrl + "/delete_holiday.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barber_id: activeBarberId, date }),
+      });
       const data = await res.json();
       if (data.success) {
         setMessage("🗓️ Ziua liberă a fost eliminată!");
@@ -178,14 +172,11 @@ export default function Dashboard() {
   const handleSave = async (id) => {
     try {
       const baseUrl = process.env.REACT_APP_BASE_URL;
-      const res = await fetch(
-        baseUrl + "/update_appointment.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, date: edited.date, time: edited.time }),
-        }
-      );
+      const res = await fetch(baseUrl + "/update_appointment.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, date: edited.date, time: edited.time }),
+      });
       const data = await res.json();
       if (data.success) {
         setMessage("✅ Programarea a fost actualizată!");
@@ -204,14 +195,11 @@ export default function Dashboard() {
     if (!window.confirm("Ești sigur că vrei să ștergi această programare?")) return;
     try {
       const baseUrl = process.env.REACT_APP_BASE_URL;
-      const res = await fetch(
-        baseUrl + "/delete_appointment.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        }
-      );
+      const res = await fetch(baseUrl + "/delete_appointment.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
       const data = await res.json();
       if (data.success) {
         setAppointments((prev) => prev.filter((a) => a.id !== id));
@@ -229,8 +217,9 @@ export default function Dashboard() {
     const normalize = (str) => (str || "").toLowerCase().replace(/\s+/g, "").trim();
     const term = normalize(search);
     const match =
-      normalize(a.client_nume || a.nume || "").includes(term) ||
-      normalize(a.client_telefon || a.telefon || "").includes(term) ||
+      normalize(a.client_nume || "").includes(term) ||
+      normalize(a.client_prenume || "").includes(term) ||
+      normalize(a.client_telefon || "").includes(term) ||
       normalize(a.service || "").includes(term);
     if (filterDate) {
       const year = filterDate.getFullYear();
@@ -241,6 +230,9 @@ export default function Dashboard() {
     }
     return match;
   });
+
+  // 🔧 FIX: Handle undefined prenume
+  const displayName = user?.prenume || "Frizer";
 
   if (!user?.id)
     return (
@@ -260,7 +252,7 @@ export default function Dashboard() {
         className="w-full max-w-6xl bg-black/40 border border-[#d4af37]/40 rounded-2xl p-4 md:p-6 lg:p-8 shadow-2xl overflow-hidden pb-28"
       >
         <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#d4af37] mb-6 text-center">
-          Dashboard — {user?.prenume || "Frizer"}
+          Dashboard — {displayName}
         </h1>
 
         {/* 🌴 Zile libere / Concediu */}
@@ -269,8 +261,8 @@ export default function Dashboard() {
             Zile libere / Concediu
           </h2>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-5 w-full  z-50">
-            <div className="relative w-full sm:w-auto flex items-center justify-center" >
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-5 w-full z-50">
+            <div className="relative w-full sm:w-auto flex items-center justify-center">
               <DatePicker
                 selected={selectedHoliday}
                 onChange={(date) => setSelectedHoliday(date)}
@@ -280,7 +272,7 @@ export default function Dashboard() {
                 placeholderText="Alege o dată..."
                 className="w-full bg-[#0f0f0f] border border-[#d4af37]/60 rounded-lg px-4 py-2 md:px-5 md:py-3 text-[#d4af37] text-center leading-none focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40 text-sm md:text-base placeholder-gray-500"
                 popperPlacement="top"
-                popperClassName="z-[9999]" 
+                popperClassName="z-[9999]"
               />
               <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 text-[#d4af37] w-5 h-5 pointer-events-none" />
             </div>
@@ -332,7 +324,6 @@ export default function Dashboard() {
               placeholderText="Filtrează după dată..."
               className="w-full bg-[#0f0f0f] border border-[#d4af37]/60 rounded-lg px-4 py-2 md:px-5 md:py-3 text-[#d4af37] text-center leading-none focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40 text-sm md:text-base placeholder-gray-500"
               popperPlacement="top-end"
-              
             />
             <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 text-[#d4af37] w-5 h-5 pointer-events-none" />
             {filterDate && (
@@ -347,7 +338,7 @@ export default function Dashboard() {
         </div>
 
         {/* 📅 Lista programărilor */}
-        {filteredAppointments.length === 0 ? (  
+        {filteredAppointments.length === 0 ? (
           <p className="text-center text-gray-400 text-sm md:text-base mb-10">
             Nu s-au găsit programări pentru filtrul selectat.
           </p>

@@ -11,10 +11,10 @@ $data = json_decode(file_get_contents("php://input"), true);
 $telefon = trim($data["telefon"] ?? "");
 $adminCode = trim($data["adminCode"] ?? "");
 
-// Lista de admini
+// Lista de admini - UPDATED PHONE NUMBERS
 $admins = [
-    ["id" => 1, "phone" => "060000000", "prenume" => "Denis"],
-    ["id" => 2, "phone" => "076784211", "prenume" => "Danu"],
+    ["id" => 1, "phone" => "069225738", "prenume" => "Denis", "nume" => ""],
+    ["id" => 2, "phone" => "060275874", "prenume" => "Danu", "nume" => ""],
 ];
 
 // Codul secret
@@ -44,7 +44,7 @@ try {
     if ($isAdmin) {
         // Admin: vede toate programările
         $stmt = $conn->query("
-            SELECT a.id, a.nume AS client_nume, a.telefon AS client_telefon, a.service,
+            SELECT a.id, a.client_nume, a.client_prenume, a.client_telefon, a.service,
                    a.date, a.time, a.created_at, b.nume AS barber_name
             FROM appointments a
             LEFT JOIN barbers b ON a.barber_id = b.id
@@ -53,7 +53,7 @@ try {
     } else {
         // Frizer normal: vede doar propriile programări
         $stmt = $conn->prepare("
-            SELECT a.id, a.nume AS client_nume, a.telefon AS client_telefon, a.service,
+            SELECT a.id, a.client_nume, a.client_prenume, a.client_telefon, a.service,
                    a.date, a.time, a.created_at, b.nume AS barber_name
             FROM appointments a
             LEFT JOIN barbers b ON a.barber_id = b.id
@@ -71,6 +71,7 @@ try {
         "user" => [
             "id" => $found["id"],
             "prenume" => $found["prenume"],
+            "nume" => $found["nume"],
             "telefon" => $found["phone"],
             "isAdmin" => $isAdmin
         ],

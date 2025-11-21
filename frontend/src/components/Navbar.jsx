@@ -44,16 +44,17 @@ export default function Navbar() {
     sessionStorage.clear();
     setCurrentUser(null);
     window.dispatchEvent(new Event("userUpdated"));
-    navigate("/"); // redirecționează spre homepage
+    navigate("/");
   };
 
-  // 👑 Verificăm dacă e admin
+  // 👑 Verificăm dacă e admin - UPDATED PHONE NUMBERS
   const isAdmin =
     currentUser &&
     (
-      currentUser.telefon === "+37360000000" ||
-      currentUser.telefon === "076784211" ||
-      currentUser.prenume?.toLowerCase() === "denis"
+      currentUser.telefon === "069225738" ||
+      currentUser.telefon === "060275874" ||
+      currentUser.prenume?.toLowerCase() === "denis" ||
+      currentUser.prenume?.toLowerCase() === "danu"
     );
 
   const navigationLinks = [
@@ -67,6 +68,9 @@ export default function Navbar() {
   if (isAdmin) {
     navigationLinks.push({ to: "/dashboard", label: "Dashboard" });
   }
+
+  // 🔧 FIX: Display name properly, handle undefined
+  const displayName = currentUser?.prenume || "Admin";
 
   return (
     <motion.nav
@@ -105,7 +109,7 @@ export default function Navbar() {
           {isAdmin ? (
             <>
               <span className="text-[#d4af37] font-medium">
-                Salut, {currentUser?.prenume || "Admin"}
+                Salut, {displayName}
               </span>
               <button
                 onClick={handleLogout}
@@ -162,7 +166,7 @@ export default function Navbar() {
               {isAdmin ? (
                 <>
                   <p className="text-[#d4af37] font-medium mb-2">
-                    {currentUser?.prenume || "Admin"}
+                    {displayName}
                   </p>
                   <button
                     onClick={() => {
