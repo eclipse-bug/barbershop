@@ -370,7 +370,7 @@ export default function Dashboard() {
                   <tr key={a.id} className="hover:bg-[#d4af37]/10 transition text-center">
                     <td className="p-2 md:p-4">{i + 1}</td>
                     <td className="p-2 md:p-4">
-                      {a.client_prenume} {a.client_nume}
+                      {a.prenume} {a.nume}
                     </td>
                     <td className="p-2 md:p-4">{a.client_telefon}</td>
                     <td className="p-2 md:p-4">{a.service}</td>
