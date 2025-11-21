@@ -229,8 +229,8 @@ export default function Dashboard() {
     const normalize = (str) => (str || "").toLowerCase().replace(/\s+/g, "").trim();
     const term = normalize(search);
     const match =
-      normalize(a.client_nume || a.nume || "").includes(term) ||
-      normalize(a.client_telefon || a.telefon || "").includes(term) ||
+      normalize(a.nume || "").includes(term) ||
+      normalize(a.telefon || "").includes(term) ||
       normalize(a.service || "").includes(term);
     if (filterDate) {
       const year = filterDate.getFullYear();
