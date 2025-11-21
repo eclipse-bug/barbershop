@@ -30,7 +30,7 @@ if (!$barber_id || !is_numeric($barber_id)) {
 
 try {
     $stmt = $conn->prepare("
-        SELECT id, client_nume, client_prenume, client_telefon, service, date, time 
+        SELECT id, nume as client_nume, prenume as client_prenume, telefon as client_telefon, service, date, time
         FROM appointments
         WHERE barber_id = :barber_id
         ORDER BY date ASC, time ASC
