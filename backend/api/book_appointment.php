@@ -17,13 +17,13 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 // 🧾 Preluăm datele din formular
-$client_nume     = trim($_POST["nume"] ?? "");
-$client_prenume  = trim($_POST["prenume"] ?? "");
-$client_telefon  = trim($_POST["telefon"] ?? "");
-$service         = trim($_POST["service"] ?? "");
-$date            = trim($_POST["date"] ?? "");
-$time            = trim($_POST["time"] ?? "");
-$barber_id       = $_POST["barber_id"] ?? null;
+$nume        = trim($_POST["nume"] ?? "");
+$telefon     = trim($_POST["telefon"] ?? "");
+$service     = trim($_POST["service"] ?? "");
+$date        = trim($_POST["date"] ?? "");
+$time        = trim($_POST["time"] ?? "");
+$barber_id   = $_POST["barber_id"] ?? null;
+$extra_time  = trim($_POST["extra_time"] ?? ""); // 🟡 adăugat pentru Tuns + Barbă
 
 // 🔒 Validare minimă
 if (!$client_nume || !$client_telefon || !$service || !$date || !$time || !$barber_id) {
@@ -64,10 +64,19 @@ try {
 
     // ✅ Inserăm programarea cu durata corectă
     $stmt = $conn->prepare("
-        INSERT INTO appointments (nume, telefon, client_nume, client_prenume, client_telefon, service, date, time, barber_id, duration)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
+        VALUES ( ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$client_nume, $client_telefon, $client_nume, $client_prenume, $client_telefon, $service, $date, $time, $barber_id, $duration]);
+    $stmt->execute([$nume, $telefon, $service, $date, $time, $barber_id]);
+
+    // ✅ Dacă e Tuns + Barbă, inserăm și următoarea oră
+    if (!empty($extra_time)) {
+        $stmt2 = $conn->prepare("
+            INSERT INTO appointments ( nume, telefon, service, date, time, barber_id)
+            VALUES ( ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt2->execute([$nume, $telefon, $service, $date, $extra_time, $barber_id]);
+    }
 
     echo json_encode([
         "success" => true,
