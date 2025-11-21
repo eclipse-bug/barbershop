@@ -293,7 +293,8 @@ export default function Dashboard() {
               placeholderText="Alege data..."
               customInput={
                 <button
-                  className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-semibold text-sm md:text-base transition-all duration-300 border-2 ${
+                  type="button"
+                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-semibold text-sm md:text-base transition-all duration-300 border-2 ${
                     filterDate
                       ? "bg-[#d4af37] text-black border-[#d4af37] hover:bg-[#d4af37]/90"
                       : "bg-transparent text-[#d4af37] border-[#d4af37]/60 hover:border-[#d4af37] hover:bg-[#d4af37]/10"
@@ -309,7 +310,24 @@ export default function Dashboard() {
                     : "Filtrează după dată"}
                 </button>
               }
-              popperPlacement="bottom-end"
+              popperPlacement="bottom-start"
+              popperModifiers={[
+                {
+                  name: "offset",
+                  options: {
+                    offset: [0, 10],
+                  },
+                },
+                {
+                  name: "preventOverflow",
+                  options: {
+                    rootBoundary: "viewport",
+                    tether: false,
+                    altAxis: true,
+                  },
+                },
+              ]}
+              popperClassName="z-[9999]"
             />
             {filterDate && (
               <button
@@ -317,7 +335,7 @@ export default function Dashboard() {
                   e.stopPropagation();
                   setFilterDate(null);
                 }}
-                className="absolute -right-2 -top-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition shadow-lg"
+                className="absolute -right-2 -top-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition shadow-lg z-10"
                 title="Șterge filtrul"
               >
                 ✕
