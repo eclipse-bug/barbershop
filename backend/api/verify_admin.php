@@ -34,11 +34,14 @@ if (!$found) {
     exit;
 }
 
-// Flag admin
-$isAdmin = false;
-if ($adminCode === $adminAccessCode) {
-    $isAdmin = true;
+// 🔒 CRITICAL FIX: Verificăm codul de acces ÎNAINTE de a continua
+if ($adminCode !== $adminAccessCode) {
+    echo json_encode(["success" => false, "message" => "Cod de acces incorect!"]);
+    exit;
 }
+
+// Dacă ajungem aici, codul de acces este corect
+$isAdmin = true;
 
 try {
     if ($isAdmin) {
