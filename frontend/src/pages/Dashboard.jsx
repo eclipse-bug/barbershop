@@ -310,24 +310,7 @@ export default function Dashboard() {
                     : "Filtrează după dată"}
                 </button>
               }
-              popperPlacement="bottom-start"
-              popperModifiers={[
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 10],
-                  },
-                },
-                {
-                  name: "preventOverflow",
-                  options: {
-                    rootBoundary: "viewport",
-                    tether: false,
-                    altAxis: true,
-                  },
-                },
-              ]}
-              popperClassName="z-[9999]"
+              popperPlacement="bottom"
             />
             {filterDate && (
               <button
