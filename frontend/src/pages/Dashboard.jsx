@@ -9,7 +9,7 @@ registerLocale("ro", ro);
 
 export default function Dashboard() {
   const [appointments, setAppointments] = useState([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState([]);
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
   const [holidays, setHolidays] = useState([]);
@@ -213,169 +213,181 @@ export default function Dashboard() {
     );
 
   return (
-    <section className="text-white px-3 py-6 md:px-6 lg:px-10 flex justify-center">
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-6xl bg-black/40 border border-[#d4af37]/40 rounded-2xl p-4 md:p-6 lg:p-8 shadow-2xl overflow-hidden pb-28"
-      >
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#d4af37] mb-6 text-center">
-          Dashboard — {displayName}
-        </h1>
+    <>
+      <style>{`
+        .react-datepicker-popper {
+          z-index: 9999 !important;
+          transform: translate(0px, 50px) !important;
+        }
+        .react-datepicker-popper[data-placement^="bottom"] {
+          padding-top: 10px;
+        }
+      `}</style>
+      
+      <section className="text-white px-3 py-6 md:px-6 lg:px-10 flex justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-6xl bg-black/40 border border-[#d4af37]/40 rounded-2xl p-4 md:p-6 lg:p-8 shadow-2xl overflow-hidden pb-28"
+        >
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#d4af37] mb-6 text-center">
+            Dashboard — {displayName}
+          </h1>
 
-        {/* 🌴 Zile libere / Concediu */}
-        <div className="mb-8 bg-[#1a1a1a]/60 border border-[#d4af37]/30 rounded-xl p-4 md:p-6 text-center">
-          <h2 className="text-lg md:text-xl font-semibold text-[#d4af37] mb-4">
-            Zile libere / Concediu
-          </h2>
+          {/* 🌴 Zile libere / Concediu */}
+          <div className="mb-8 bg-[#1a1a1a]/60 border border-[#d4af37]/30 rounded-xl p-4 md:p-6 text-center">
+            <h2 className="text-lg md:text-xl font-semibold text-[#d4af37] mb-4">
+              Zile libere / Concediu
+            </h2>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-5 w-full z-50">
-            <div className="relative w-full sm:w-auto flex items-center justify-center">
-              <DatePicker
-                selected={selectedHoliday}
-                onChange={(date) => setSelectedHoliday(date)}
-                locale="ro"
-                dateFormat="dd.MM.yyyy"
-                minDate={new Date()}
-                placeholderText="Alege o dată..."
-                className="w-full bg-[#0f0f0f] border border-[#d4af37]/60 rounded-lg px-4 py-2 md:px-5 md:py-3 text-[#d4af37] text-center leading-none focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40 text-sm md:text-base placeholder-gray-500"
-                popperPlacement="top"
-                popperClassName="z-[9999]"
-              />
-              <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 text-[#d4af37] w-5 h-5 pointer-events-none" />
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-5 w-full z-50">
+              <div className="relative w-full sm:w-auto flex items-center justify-center">
+                <DatePicker
+                  selected={selectedHoliday}
+                  onChange={(date) => setSelectedHoliday(date)}
+                  locale="ro"
+                  dateFormat="dd.MM.yyyy"
+                  minDate={new Date()}
+                  placeholderText="Alege o dată..."
+                  className="w-full bg-[#0f0f0f] border border-[#d4af37]/60 rounded-lg px-4 py-2 md:px-5 md:py-3 text-[#d4af37] text-center leading-none focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40 text-sm md:text-base placeholder-gray-500"
+                  popperPlacement="top"
+                  popperClassName="z-[9999]"
+                />
+                <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 text-[#d4af37] w-5 h-5 pointer-events-none" />
+              </div>
+
+              <button
+                onClick={handleAddHoliday}
+                className="w-full md:w-auto bg-[#d4af37] text-black font-semibold px-5 md:px-6 py-2 md:py-3 rounded-md hover:bg-transparent hover:text-[#d4af37] border border-[#d4af37] transition duration-300 shadow-md text-sm md:text-base"
+              >
+                Salvează concediul
+              </button>
             </div>
 
-            <button
-              onClick={handleAddHoliday}
-              className="w-full md:w-auto bg-[#d4af37] text-black font-semibold px-5 md:px-6 py-2 md:py-3 rounded-md hover:bg-transparent hover:text-[#d4af37] border border-[#d4af37] transition duration-300 shadow-md text-sm md:text-base"
-            >
-              Salvează concediul
-            </button>
-          </div>
-
-          {holidays.length > 0 && (
-            <ul className="mt-5 text-center text-xs md:text-sm text-gray-300 flex flex-wrap justify-center gap-2 md:gap-3">
-              {holidays.map((h, i) => (
-                <li
-                  key={i}
-                  className="bg-[#222]/60 px-3 py-1.5 rounded-md flex items-center gap-2 border border-[#d4af37]/20"
-                >
-                  <span className="text-[#d4af37]">{h}</span>
-                  <button
-                    onClick={() => handleDeleteHoliday(h)}
-                    className="text-red-400 hover:text-red-500 text-base leading-none"
+            {holidays.length > 0 && (
+              <ul className="mt-5 text-center text-xs md:text-sm text-gray-300 flex flex-wrap justify-center gap-2 md:gap-3">
+                {holidays.map((h, i) => (
+                  <li
+                    key={i}
+                    className="bg-[#222]/60 px-3 py-1.5 rounded-md flex items-center gap-2 border border-[#d4af37]/20"
                   >
-                    ✕
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* 🔍 Căutare + Filtru Dată */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6 w-full">
-          <input
-            type="text"
-            placeholder="Caută client, serviciu sau telefon..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-80 bg-[#1a1a1a] border border-[#d4af37]/40 text-[#d4af37] placeholder-gray-500 rounded-md px-4 py-2 text-center leading-none text-sm md:text-base focus:border-[#d4af37] focus:outline-none"
-          />
-
-          <div className="relative w-full sm:w-auto">
-            <DatePicker
-              selected={filterDate}
-              onChange={(date) => setFilterDate(date)}
-              locale="ro"
-              dateFormat="dd.MM.yyyy"
-              placeholderText="Alege data..."
-              customInput={
-                <button
-                  type="button"
-                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-semibold text-sm md:text-base transition-all duration-300 border-2 ${
-                    filterDate
-                      ? "bg-[#d4af37] text-black border-[#d4af37] hover:bg-[#d4af37]/90"
-                      : "bg-transparent text-[#d4af37] border-[#d4af37]/60 hover:border-[#d4af37] hover:bg-[#d4af37]/10"
-                  }`}
-                >
-                  <CalendarDays className="w-4 h-4" />
-                  {filterDate
-                    ? `${filterDate.getDate().toString().padStart(2, "0")}.${(
-                        filterDate.getMonth() + 1
-                      )
-                        .toString()
-                        .padStart(2, "0")}.${filterDate.getFullYear()}`
-                    : "Filtrează după dată"}
-                </button>
-              }
-              popperPlacement="bottom"
-            />
-            {filterDate && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setFilterDate(null);
-                }}
-                className="absolute -right-2 -top-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition shadow-lg z-10"
-                title="Șterge filtrul"
-              >
-                ✕
-              </button>
+                    <span className="text-[#d4af37]">{h}</span>
+                    <button
+                      onClick={() => handleDeleteHoliday(h)}
+                      className="text-red-400 hover:text-red-500 text-base leading-none"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
-        </div>
 
-        {/* 📅 Lista programărilor */}
-        {filteredAppointments.length === 0 ? (
-          <p className="text-center text-gray-400 text-sm md:text-base mb-10">
-            Nu s-au găsit programări pentru filtrul selectat.
-          </p>
-        ) : (
-          <div className="overflow-y-auto max-h-[65vh] rounded-lg border border-[#d4af37]/30 shadow-inner mb-10">
-            <table className="w-full text-[11px] sm:text-sm md:text-base border-collapse">
-              <thead className="bg-[#1a1a1a] text-[#d4af37] sticky top-0 z-10">
-                <tr>
-                  <th className="p-2 md:p-4">#</th>
-                  <th className="p-2 md:p-4">Client</th>
-                  <th className="p-2 md:p-4">Telefon</th>
-                  <th className="p-2 md:p-4">Serviciu</th>
-                  <th className="p-2 md:p-4">Data</th>
-                  <th className="p-2 md:p-4">Ora</th>
-                  <th className="p-2 md:p-4">Acțiuni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAppointments.map((a, i) => (
-                  <tr key={a.id} className="hover:bg-[#d4af37]/10 transition text-center">
-                    <td className="p-2 md:p-4">{i + 1}</td>
-                    <td className="p-2 md:p-4">
-                      {a.client_prenume} {a.client_nume}
-                    </td>
-                    <td className="p-2 md:p-4">{a.client_telefon}</td>
-                    <td className="p-2 md:p-4">{a.service}</td>
-                    <td className="p-2 md:p-4">{a.date}</td>
-                    <td className="p-2 md:p-4">{a.time}</td>
-                    <td className="p-2 md:p-4">
-                      <button
-                        onClick={() => handleDelete(a.id)}
-                        className="text-red-500 hover:text-red-400 hover:underline text-sm transition"
-                      >
-                        Șterge
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* 🔍 Căutare + Filtru Dată */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 w-full">
+            <input
+              type="text"
+              placeholder="Caută client, serviciu sau telefon..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:w-80 bg-[#1a1a1a] border border-[#d4af37]/40 text-[#d4af37] placeholder-gray-500 rounded-md px-4 py-2 text-center leading-none text-sm md:text-base focus:border-[#d4af37] focus:outline-none"
+            />
+
+            <div className="relative w-full sm:w-auto">
+              <DatePicker
+                selected={filterDate}
+                onChange={(date) => setFilterDate(date)}
+                locale="ro"
+                dateFormat="dd.MM.yyyy"
+                placeholderText="Alege data..."
+                customInput={
+                  <button
+                    type="button"
+                    className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-semibold text-sm md:text-base transition-all duration-300 border-2 ${
+                      filterDate
+                        ? "bg-[#d4af37] text-black border-[#d4af37] hover:bg-[#d4af37]/90"
+                        : "bg-transparent text-[#d4af37] border-[#d4af37]/60 hover:border-[#d4af37] hover:bg-[#d4af37]/10"
+                    }`}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    {filterDate
+                      ? `${filterDate.getDate().toString().padStart(2, "0")}.${(
+                          filterDate.getMonth() + 1
+                        )
+                          .toString()
+                          .padStart(2, "0")}.${filterDate.getFullYear()}`
+                      : "Filtrează după dată"}
+                  </button>
+                }
+                popperPlacement="bottom"
+              />
+              {filterDate && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFilterDate(null);
+                  }}
+                  className="absolute -right-2 -top-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition shadow-lg z-10"
+                  title="Șterge filtrul"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
-        )}
 
-        {message && (
-          <p className="text-center text-sm mt-2 text-[#d4af37]">{message}</p>
-        )}
-      </motion.div>
-    </section>
+          {/* 📅 Lista programărilor */}
+          {filteredAppointments.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm md:text-base mb-10">
+              Nu s-au găsit programări pentru filtrul selectat.
+            </p>
+          ) : (
+            <div className="overflow-y-auto max-h-[65vh] rounded-lg border border-[#d4af37]/30 shadow-inner mb-10">
+              <table className="w-full text-[11px] sm:text-sm md:text-base border-collapse">
+                <thead className="bg-[#1a1a1a] text-[#d4af37] sticky top-0 z-10">
+                  <tr>
+                    <th className="p-2 md:p-4">#</th>
+                    <th className="p-2 md:p-4">Client</th>
+                    <th className="p-2 md:p-4">Telefon</th>
+                    <th className="p-2 md:p-4">Serviciu</th>
+                    <th className="p-2 md:p-4">Data</th>
+                    <th className="p-2 md:p-4">Ora</th>
+                    <th className="p-2 md:p-4">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAppointments.map((a, i) => (
+                    <tr key={a.id} className="hover:bg-[#d4af37]/10 transition text-center">
+                      <td className="p-2 md:p-4">{i + 1}</td>
+                      <td className="p-2 md:p-4">
+                        {a.client_prenume} {a.client_nume}
+                      </td>
+                      <td className="p-2 md:p-4">{a.client_telefon}</td>
+                      <td className="p-2 md:p-4">{a.service}</td>
+                      <td className="p-2 md:p-4">{a.date}</td>
+                      <td className="p-2 md:p-4">{a.time}</td>
+                      <td className="p-2 md:p-4">
+                        <button
+                          onClick={() => handleDelete(a.id)}
+                          className="text-red-500 hover:text-red-400 hover:underline text-sm transition"
+                        >
+                          Șterge
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {message && (
+            <p className="text-center text-sm mt-2 text-[#d4af37]">{message}</p>
+          )}
+        </motion.div>
+      </section>
+    </>
   );
 }
