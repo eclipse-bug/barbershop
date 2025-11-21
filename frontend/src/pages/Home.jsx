@@ -35,7 +35,7 @@ export default function Home() {
           border border-[#d4af37] transition duration-300 shadow-lg hover:shadow-[#d4af37]/30
           w-[80%] sm:w-auto"
         >
-          Programează-te acum
+          Alege frizerul tău
         </motion.a>
       </motion.div>
 
