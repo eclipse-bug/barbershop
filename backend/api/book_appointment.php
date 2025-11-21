@@ -65,18 +65,18 @@ try {
 
     // ✅ Inserăm prima oră
     $stmt = $conn->prepare("
-        INSERT INTO appointments (client_nume, client_prenume, client_telefon, service, date, time, barber_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO appointments (nume, telefon, client_nume, client_prenume, client_telefon, service, date, time, barber_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$client_nume, $client_prenume, $client_telefon, $service, $date, $time, $barber_id]);
+    $stmt->execute([$client_nume, $client_telefon, $client_nume, $client_prenume, $client_telefon, $service, $date, $time, $barber_id]);
 
     // ✅ Dacă e Tuns + Barbă, inserăm și următoarea oră
     if (!empty($extra_time)) {
         $stmt2 = $conn->prepare("
-            INSERT INTO appointments (client_nume, client_prenume, client_telefon, service, date, time, barber_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO appointments (nume, telefon, client_nume, client_prenume, client_telefon, service, date, time, barber_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt2->execute([$client_nume, $client_prenume, $client_telefon, $service, $date, $extra_time, $barber_id]);
+        $stmt2->execute([$client_nume, $client_telefon, $client_nume, $client_prenume, $client_telefon, $service, $date, $extra_time, $barber_id]);
     }
 
     echo json_encode([
