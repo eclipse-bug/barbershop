@@ -275,7 +275,7 @@ export default function Dashboard() {
         </div>
 
         {/* 🔍 Căutare + Filtru Dată */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6 w-full text-center">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6 w-full">
           <input
             type="text"
             placeholder="Caută client, serviciu sau telefon..."
@@ -284,21 +284,41 @@ export default function Dashboard() {
             className="w-full sm:w-80 bg-[#1a1a1a] border border-[#d4af37]/40 text-[#d4af37] placeholder-gray-500 rounded-md px-4 py-2 text-center leading-none text-sm md:text-base focus:border-[#d4af37] focus:outline-none"
           />
 
-          <div className="relative w-full sm:w-auto flex items-center justify-center">
+          <div className="relative w-full sm:w-auto">
             <DatePicker
               selected={filterDate}
               onChange={(date) => setFilterDate(date)}
               locale="ro"
               dateFormat="dd.MM.yyyy"
-              placeholderText="Filtrează după dată..."
-              className="w-full bg-[#0f0f0f] border border-[#d4af37]/60 rounded-lg px-4 py-2 md:px-5 md:py-3 text-[#d4af37] text-center leading-none focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40 text-sm md:text-base placeholder-gray-500"
-              popperPlacement="top-end"
+              placeholderText="Alege data..."
+              customInput={
+                <button
+                  className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-semibold text-sm md:text-base transition-all duration-300 border-2 ${
+                    filterDate
+                      ? "bg-[#d4af37] text-black border-[#d4af37] hover:bg-[#d4af37]/90"
+                      : "bg-transparent text-[#d4af37] border-[#d4af37]/60 hover:border-[#d4af37] hover:bg-[#d4af37]/10"
+                  }`}
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  {filterDate
+                    ? `${filterDate.getDate().toString().padStart(2, "0")}.${(
+                        filterDate.getMonth() + 1
+                      )
+                        .toString()
+                        .padStart(2, "0")}.${filterDate.getFullYear()}`
+                    : "Filtrează după dată"}
+                </button>
+              }
+              popperPlacement="bottom-end"
             />
-            <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 text-[#d4af37] w-5 h-5 pointer-events-none" />
             {filterDate && (
               <button
-                onClick={() => setFilterDate(null)}
-                className="absolute right-9 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFilterDate(null);
+                }}
+                className="absolute -right-2 -top-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition shadow-lg"
+                title="Șterge filtrul"
               >
                 ✕
               </button>
