@@ -9,8 +9,6 @@ registerLocale("ro", ro);
 
 export default function Dashboard() {
   const [appointments, setAppointments] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [edited, setEdited] = useState({ date: "", time: "" });
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
@@ -79,7 +77,7 @@ export default function Dashboard() {
     }
   };
 
-  // --- Inițializare utilizator - UPDATED PHONE NUMBERS ---
+  // --- Inițializare utilizator ---
   useEffect(() => {
     const raw =
       localStorage.getItem("loggedUser") || sessionStorage.getItem("loggedUser");
@@ -95,7 +93,6 @@ export default function Dashboard() {
     setUser(stored);
     const phoneNormalized = (stored.telefon || "").replace(/\D/g, "");
 
-    // 🔧 UPDATED: New phone numbers for Denis and Danu
     if (phoneNormalized === "069225738") {
       setForcedBarberId(1); // Denis
       fetchAppointments(1);
@@ -163,33 +160,6 @@ export default function Dashboard() {
     }
   };
 
-  // --- Editare / Salvare programare ---
-  const handleEdit = (appt) => {
-    setEditingId(appt.id);
-    setEdited({ date: appt.date, time: appt.time });
-  };
-
-  const handleSave = async (id) => {
-    try {
-      const baseUrl = process.env.REACT_APP_BASE_URL;
-      const res = await fetch(baseUrl + "/update_appointment.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, date: edited.date, time: edited.time }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMessage("✅ Programarea a fost actualizată!");
-        setEditingId(null);
-        fetchAppointments(activeBarberId);
-      } else setMessage("⚠ Eroare la actualizare!");
-    } catch {
-      setMessage("⚠ Eroare de conexiune!");
-    } finally {
-      setTimeout(() => setMessage(""), 2500);
-    }
-  };
-
   // --- Ștergere programare ---
   const handleDelete = async (id) => {
     if (!window.confirm("Ești sigur că vrei să ștergi această programare?")) return;
@@ -231,7 +201,6 @@ export default function Dashboard() {
     return match;
   });
 
-  // 🔧 FIX: Handle undefined prenume
   const displayName = user?.prenume || "Frizer";
 
   if (!user?.id)
@@ -365,62 +334,15 @@ export default function Dashboard() {
                     </td>
                     <td className="p-2 md:p-4">{a.client_telefon}</td>
                     <td className="p-2 md:p-4">{a.service}</td>
+                    <td className="p-2 md:p-4">{a.date}</td>
+                    <td className="p-2 md:p-4">{a.time}</td>
                     <td className="p-2 md:p-4">
-                      {editingId === a.id ? (
-                        <input
-                          type="date"
-                          value={edited.date}
-                          onChange={(e) => setEdited({ ...edited, date: e.target.value })}
-                          className="bg-[#111] border border-[#d4af37]/40 text-[#d4af37] rounded px-2 py-1 text-sm w-[110px]"
-                        />
-                      ) : (
-                        a.date
-                      )}
-                    </td>
-                    <td className="p-2 md:p-4">
-                      {editingId === a.id ? (
-                        <input
-                          type="time"
-                          value={edited.time}
-                          onChange={(e) => setEdited({ ...edited, time: e.target.value })}
-                          className="bg-[#111] border border-[#d4af37]/40 text-[#d4af37] rounded px-2 py-1 text-sm w-[90px]"
-                        />
-                      ) : (
-                        a.time
-                      )}
-                    </td>
-                    <td className="p-2 md:p-4 flex flex-col md:flex-row justify-center gap-2">
-                      {editingId === a.id ? (
-                        <>
-                          <button
-                            onClick={() => handleSave(a.id)}
-                            className="text-green-400 hover:underline text-sm"
-                          >
-                            Salvează
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="text-gray-400 hover:underline text-sm"
-                          >
-                            Anulează
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleEdit(a)}
-                            className="text-[#d4af37] hover:underline text-sm"
-                          >
-                            Editează
-                          </button>
-                          <button
-                            onClick={() => handleDelete(a.id)}
-                            className="text-red-500 hover:underline text-sm"
-                          >
-                            Șterge
-                          </button>
-                        </>
-                      )}
+                      <button
+                        onClick={() => handleDelete(a.id)}
+                        className="text-red-500 hover:text-red-400 hover:underline text-sm transition"
+                      >
+                        Șterge
+                      </button>
                     </td>
                   </tr>
                 ))}
